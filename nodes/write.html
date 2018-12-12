@@ -1,0 +1,97 @@
+<script type="text/javascript">
+  RED.nodes.registerType('MC Write', {
+    category: 'MITSUBISHI',
+    color: '#3FADB5',
+    defaults: {
+      name: { value: "" },
+      topic: { value: "" },
+      connection: { type: "MC Protocol Connection", required: true },
+      address: { value: "" },
+      data: { value: "" }
+    },
+    inputs: 1,
+    outputs: 1,
+    inputLabels: "Trigger request",
+    outputLabels: "Write result",
+    align: "right",
+    icon: "write.png",
+    label: function () {
+      return this.name || "MC Write";
+    }
+  });
+</script>
+
+<script type="text/x-red" data-template-name="MC Write">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> <span data-i18n="write.label.name"> Name</span></label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+      <label for="node-input-connection"><i class="icon-tag"></i><span data-i18n="write.label.connection"> Connection</span></label>
+      <input type="text" id="node-input-connection">
+    </div>
+    <div class="form-row">
+        <label for="node-input-address"><i class="icon-tag"></i> <span data-i18n="write.label.address"> Address</span></label>
+        <input type="text" id="node-input-address" placeholder="e.g. D10 or leave blank to use payload.address">
+    </div>
+    <div class="form-row">
+        <label for="node-input-data"><i class="icon-tag"></i> <span data-i18n="write.label.data"> Data</span></label>
+        <input type="text" id="node-input-data" placeholder="e.g. 1,2,3 or leave blank to use payload.data">
+    </div>
+
+</script>
+
+<script type="text/x-red" data-help-name="MC Write">
+    <p>Write data to an MITSUBISHI PLC using mcprotocol protocol</p>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt class="optional">payload
+            <span class="property-type">object</span>
+        </dt>
+        <dd> If address and data properties are left blank then topic and payload will be used.</dd>
+        <!-- <dd> If address and data properties are left blank and the payload is an object containing .address and .data, these will be used instead. </dd> -->
+    </dl>
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>the result of the PLC write command.</dd>
+    </dl>
+    <h3>Details</h3>
+    <p>If node property address is left blank, <code>msg.topic</code> can be used to provide the address.  
+        If node property data is left blank, <code>msg.payload</code> can be used to provide data.  
+    </p>
+    <p>Address format [DS] DEV [DT] DA [.BIT] [,CNT] ...  
+        <ol>
+            <li>[1] DS	- digit specifier (e.g. K4) [optional]</li>
+            <li>[2] DEV - Device (Y|X|D|F|W|B|R|etc)</li>
+            <li>[3] DT 	- data type (REAL|FLOAT|STR|DWORD|DINT) [optional]</li>
+            <li>[4] DA 	- Device Address</li>
+            <li>[5] BIT - bit number [optional]</li>
+            <li>[6] CNT - count of items [optional]</li>
+        </ol>
+    </p>
+    <p>data must match the address style e.g...
+        <table>
+          <tr>
+            <td>Address Example</td>
+            <td>Expected Type</td>
+            <td>Notes</td>
+            </tr>
+          <tr>
+            <td>K4Y0</td>
+            <td>int</td>
+            <td>−32,768 to 32,767</td>
+            </tr>
+          <tr>
+            <td>DSTR0,10</td>
+            <td>string</td>
+            <td>Upto 10 chars long</td>
+            </tr>
+          <tr>
+            <td>DUINT0,10</td>
+            <td>UINT[10]</td>
+            <td>10 WD array containing values 0 to 65535</td>
+            </tr>
+        </table>
+     </p>
+</script>

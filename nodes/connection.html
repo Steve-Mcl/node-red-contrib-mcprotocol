@@ -1,0 +1,107 @@
+<script type="text/x-red" data-template-name="MC Protocol Connection">
+  <div class="form-row">
+    <label for="node-input-name"><i class="icon-tag"></i> <span data-i18n="mcprotocol-read.label.name">Name</span></label>
+    <input type="text" id="node-config-input-name" placeholder="Name">
+  </div>  
+  <div class="form-row">
+      <label for="node-input-host"><i class="icon-tag"></i> <span data-i18n="mcprotocol-read.label.host">Host</span></label>
+      <input type="text" id="node-config-input-host" placeholder="192.168.x.x">
+  </div>
+  <div class="form-row">
+    <label for="node-input-port"><i class="icon-tag"></i> <span data-i18n="mcprotocol-read.label.port">Port</span></label>
+    <input type="text" id="node-config-input-port" placeholder="9600">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-frame"><i class="icon-tag"></i> <span data-i18n="mcprotocol-read.label.frame">frame</span></label>
+    <select id="node-config-input-frame">
+      <option value="1E">1E</option>
+      <option value="3E">3E</option>
+      <option value="4E">4E</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-plcType"><i class="icon-tag"></i> <span data-i18n="mcprotocol-read.label.plcType">PLC Type</span></label>
+    <select id="node-config-input-plcType">
+      <option value="A">A</option>
+      <option value="QnA">QnA</option>
+      <option value="Q">Q</option>
+      <option value="L">L</option>
+      <option value="R">R</option>
+    </select>
+  </div>
+
+  <div class="form-row">
+    <label for="node-config-input-ascii"> </label>
+    <label for="node-config-input-ascii" style="width:70%">
+        <input type="checkbox" id="node-config-input-ascii" style="display:inline-block; width:22px; vertical-align:baseline;"><span data-i18n="mcprotocol-read.label.ascii">ascii mode</span>
+    </label>
+  </div>
+
+  <div class="form-row">
+    <label for="node-input-network"><i class="icon-tag"></i> <span data-i18n="mcprotocol-read.label.network">Network No</span></label>
+    <input type="text" id="node-config-input-network" placeholder="Default 0 (for 3E / 4E only)">
+  </div>
+
+  <div class="form-row">
+    <label for="node-input-PCStation"><i class="icon-tag"></i> <span data-i18n="mcprotocol-read.label.PCStation">PC No</span></label>
+    <input type="text" id="node-config-input-PCStation" placeholder="0xff">
+  </div>
+
+  <div class="form-row">
+    <label for="node-input-PLCModuleNo"><i class="icon-tag"></i> <span data-i18n="mcprotocol-read.label.PLCModuleNo">Dest Module No</span></label>
+    <input type="text" id="node-config-input-PLCModuleNo" placeholder="Default 0x3ff (for 3E / 4E only)">
+  </div>
+
+  <div class="form-row">
+    <label for="node-input-PLCStation"><i class="icon-tag"></i> <span data-i18n="mcprotocol-read.label.PLCStation">Dest Module Station No</span></label>
+    <input type="text" id="node-config-input-PLCStation" placeholder="0x0 for connected station (host station).">
+  </div> 
+
+  <div class="form-row">
+    <label for="node-config-input-octalInputOutput"> </label>
+    <label for="node-config-input-octalInputOutput" style="width:70%">
+        <input type="checkbox" id="node-config-input-octalInputOutput" style="display:inline-block; width:22px; vertical-align:baseline;"><span data-i18n="mcprotocol-read.label.octalInputOutput">Octal Input/Output</span>
+    </label>
+  </div>
+
+</script>
+
+
+<script type="text/javascript">
+  RED.nodes.registerType('MC Protocol Connection', {
+    category: 'config',
+    color: '#3FADB5',
+    icon: "connection.png",
+    defaults: {
+      name: { value: "" },
+      host: { value: "192.168.0.1", required: true },
+      port: { value: 9600, required: true, validate: RED.validators.number() },
+      frame: { value: "3E"},
+      plcType: { value: "Q"},
+      ascii: { value: false},
+      PLCStation : { value: 0},
+      PCStation : { value: undefined},
+      PLCModuleNo : { value: undefined},
+      network : { value: undefined},
+      octalInputOutput : { value: false},
+
+    },
+    label: function () {
+      return this.name || this.host + ":" + this.port || "MC Protocol Connection";
+    }
+  });
+</script>
+
+
+<script type="text/x-red" data-help-name="MC Protocol Connection">
+  <p>Configuration for a connection to a Mitsubishi PLC.</p>
+  <p>This configuration will create a single connection to the PLC which can
+     then be reused by <code>MC Read</code> and <code>MC Read</code> nodes.</p>
+  <p></p>
+  <h4>NOTES</h4>
+  <ul>
+    <li>Only TCP connection method is supported</li>
+    <li>ASCII mode is currently not supported for frames 3E and 4E</li>
+  </ul>
+
+</script>
