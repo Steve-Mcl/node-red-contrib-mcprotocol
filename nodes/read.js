@@ -111,7 +111,6 @@ module.exports = function (RED) {
 						info: "read.js-->on 'input'",
             connection: `host: ${node.connectionConfig.host}, port: ${node.connectionConfig.port}`, 
             address: addr,
-            size: count,
 					 };
 					console.debug(dbgmsg);
           return;
