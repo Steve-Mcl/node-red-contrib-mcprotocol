@@ -129,7 +129,7 @@ module.exports = function (RED) {
     }
 
   }
-  RED.nodes.registerType("MC Protocol Write", mcWrite);
+  RED.nodes.registerType("MC Write", mcWrite);
   mcWrite.prototype.close = function() {
 		if (this.client) {
 			this.client.disconnect();

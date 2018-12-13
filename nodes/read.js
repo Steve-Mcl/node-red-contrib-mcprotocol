@@ -125,7 +125,7 @@ module.exports = function (RED) {
 			node.status({fill:"red",shape:"ring",text:"error"});
     }
 	}
-	RED.nodes.registerType("MC Protocol Read", mcRead);
+	RED.nodes.registerType("MC Read", mcRead);
 	mcRead.prototype.close = function() {
 		if (this.client) {
 			this.client.disconnect();
