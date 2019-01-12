@@ -1097,7 +1097,7 @@ MCProtocol.prototype.prepareReadPacket = function (items) {
 		var startElement = blockListItem.requestOffset; // try to ignore the offset
 		var remainingLength = blockListItem.byteLength;
 		var remainingTotalArrayLength = blockListItem.totalArrayLength;
-		
+
 		//initialise the buffers
 		blockListItem.byteBuffer = new Buffer(blockListItem.byteLength);
 		blockListItem.qualityBuffer = new Buffer(blockListItem.byteLength);
@@ -1532,6 +1532,14 @@ MCProtocol.prototype.writeResponse = function (data, decodedHeader) {
 			let theItem = self.globalWriteBlockList[i];
 			var ttms = theItem.recvTime - theItem.initTime;
 			let result = new PLCWriteResult(theItem.useraddr, theItem.addr, theItem.writeQuality, ttms);
+			result.deviceCode = theItem.deviceCode;
+			result.deviceCodeNotation = theItem.deviceCodeSpec.notation;
+			result.deviceCodeType = theItem.deviceCodeSpec.type;
+			result.digitSpec = theItem.digitSpec;
+			result.dataType = theItem.datatype;
+			result.dataTypeByteLength = theItem.dtypelen;
+			result.deviceNo = theItem.offset;
+			result.bitOffset = theItem.bitOffset;
 			results[theItem.useraddr] = result;
 
 			if (typeof (theItem.cb) === 'function') {
@@ -1638,6 +1646,14 @@ MCProtocol.prototype.readResponse = function (data, decodedHeader) {
 				processMCReadItem(itemRef, self.isAscii, self.frame);
 				var ttms = itemRef.recvTime - itemRef.initTime;
 				let result = new PLCReadResult(itemRef.useraddr, itemRef.addr, itemRef.quality, ttms, itemRef.value, itemRef.datatype);
+				result.deviceCode = itemRef.deviceCode;
+				result.deviceCodeNotation = itemRef.deviceCodeSpec.notation;
+				result.deviceCodeType = itemRef.deviceCodeSpec.type;
+				result.digitSpec = itemRef.digitSpec;
+				result.dataType = itemRef.datatype;
+				result.dataTypeByteLength = itemRef.dtypelen;
+				result.deviceNo = itemRef.offset;
+				result.bitOffset = itemRef.bitOffset;
 
 				if (typeof (itemRef.cb) === 'function') {
 					outputLog("Now calling back item.cb(). Sending the following values...", "DEBUG", self.connectionID);
@@ -2552,7 +2568,7 @@ MCProtocol.prototype.enumDeviceCodeSpecR = _enum({
 	DX: {symbol: 'DX', type: 'BIT', notation: 'Hexadecimal', binary: 0x00A2, ascii: 'DX**', description: 'Direct access input'},
 	DY: {symbol: 'DY', type: 'BIT', notation: 'Hexadecimal', binary: 0x00A3, ascii: 'DY**', description: 'Direct access output'},
 	Z: {symbol: 'Z', type: 'WORD', notation: 'Decimal', binary: 0x00CC, ascii: 'Z***', description: 'Index register Index register'},
-	LZ: {symbol: 'LZ', type: 'DWORD', notation: 'WORD', binary: 0x0062, ascii: 'LZ**', description: 'Long index register*2'},
+	LZ: {symbol: 'LZ', type: 'DWORD', notation: 'Decimal', binary: 0x0062, ascii: 'LZ**', description: 'Long index register*2'},
 	R: {symbol: 'R', type: 'WORD', notation: 'Decimal', binary: 0x00AF, ascii: 'R***', description: 'File register*3 Block Switching Method'},
 	ZR: {symbol: 'ZR', type: 'WORD', notation: 'Hexadecimal', binary: 0x00B0, ascii: 'ZR**', description: 'Serial number access method'},	
 });
@@ -2954,7 +2970,7 @@ function PLCItem() { // Object
 			theItem.datatype = "BYTE";
 		} else if(theItem.digitSpec == "K4"){
 			theItem.datatype = "INT";
-		} else if(theItem.digitSpec == "K2"){
+		} else if(theItem.digitSpec == "K8"){
 			theItem.datatype = "DINT";
 		}
 
