@@ -1097,7 +1097,11 @@ MCProtocol.prototype.prepareReadPacket = function (items) {
 		var startElement = blockListItem.requestOffset; // try to ignore the offset
 		var remainingLength = blockListItem.byteLength;
 		var remainingTotalArrayLength = blockListItem.totalArrayLength;
-
+		
+		//initialise the buffers
+		blockListItem.byteBuffer = new Buffer(blockListItem.byteLength);
+		blockListItem.qualityBuffer = new Buffer(blockListItem.byteLength);
+		
 		blockListItem.requestReference = [];
 		
 		// If we need to spread the sending/receiving over multiple packets... 
@@ -1138,10 +1142,7 @@ MCProtocol.prototype.prepareReadPacket = function (items) {
 			thisRequest++;
 		}
 		
-		//initialise the buffers
-		blockListItem.byteBuffer = new Buffer(blockListItem.byteLength);
-		blockListItem.qualityBuffer = new Buffer(blockListItem.byteLength);
-		
+
 	}
 
 	// The packetizer...
