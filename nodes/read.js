@@ -6,9 +6,9 @@ module.exports = function (RED) {
     this.name = config.name;
     this.topic = config.topic;
     this.connection = config.connection;
-		this.address = config.address;
-		this.count = config.count;
-		this.sign = config.sign;
+		this.address = config.address || "";//address
+		this.addressType = config.addressType || "str";
+		this.outputFormat = config.outputFormat || 0;
 
     this.connectionConfig = RED.nodes.getNode(this.connection);
     var context = this.context();
@@ -37,8 +37,17 @@ module.exports = function (RED) {
 
 
 			function myReply(problem, msg) {
-				node.busy = false;//reset busy - allow node to be triggered
 				clearTimeout(node.busyMonitor);
+				if(!node.busy){
+          return;//not busy - dont process the reply (node may have timed out)
+        }
+				node.busy = false;//reset busy - allow node to be triggered
+				node.msgMem.mcReadDetails = {};
+				node.msgMem.mcReadDetails.request = node.request;
+				node.msgMem.mcReadDetails.response = msg;
+				node.msgMem.mcReadDetails.timeout = msg.timeout;//TODO
+				node.msgMem.mcReadDetails.error = problem;
+				node.msgMem.payload = null;
 
         if(msg.timeout)  {
           node.status({fill:"red",shape:"ring",text:"timeout"});
@@ -48,7 +57,9 @@ module.exports = function (RED) {
             msg: msg,
             error: 'timeout'
           }
-          console.error(dbgmsg);
+					console.error(dbgmsg);
+					node.msgMem.mcReadDetails.errorMsg = 'timeout';
+					node.send(node.msgMem);
           return;
 				}
 
@@ -57,31 +68,90 @@ module.exports = function (RED) {
 				} else {
 					node.status({fill:"green",shape:"dot",text:"Good"});
 				}
-				
-				var newMsg = {payload: msg, name: node.name, topic : node.topic};
-				
-        node.send(newMsg);
+
+				// msg.deviceCode
+				// msg.digitSpec
+				// msg.dataType
+				// msg.deviceNo 
+				// msg.isGood 
+				// msg.quality 
+				// msg.TAG 
+				// msg.addr 
+				// msg.timeTaken 
+				// msg.timeStamp 
+				// msg.value 
+				// msg.valueType 
+
+				var data = msg.value;
+				if(data && !problem) {
+					let iWD = msg.deviceNo;
+					let loopBit = 0, bitNo = msg.bitOffset;
+					let JSONData = {};
+					if(node.outputFormat == 0/*JSON*/){
+						for (var x in data) {
+							let buff_address = '';
+			
+							if(msg.dataType == 'BIT' && msg.deviceCodeType != "BIT"){
+								bitNo = msg.bitOffset + loopBit;
+								if(bitNo == 16) iWD++;
+								if(bitNo >= 16){
+									bitNo = bitNo - 16
+								}
+								
+								switch(msg.deviceCodeNotation){
+									case 'Decimal':
+										buff_address = `${msg.deviceCode}${iWD}.${Number(bitNo).toString(16).toUpperCase()}`
+										JSONData[buff_address] =  data[x];
+									break;
+									case 'Hexadecimal':
+										buff_address = `${msg.deviceCode}${Number(iWD).toString(16).toUpperCase()}.${Number(bitNo).toString(16).toUpperCase()}`
+										JSONData[buff_address] =  data[x];
+									break;
+								}
+								loopBit++;
+								if(loopBit >= 16)
+									loopBit = 0;
+							} else {
+								switch(msg.deviceCodeNotation){
+									case 'Decimal':
+										buff_address = `${msg.deviceCode}${iWD}`
+										JSONData[buff_address] =  data[x];
+									break;
+									case 'Hexadecimal':
+										buff_address = `${msg.deviceCode}${Number(iWD).toString(16).toUpperCase()}`
+										JSONData[buff_address] =  data[x];
+									break;
+								}
+								iWD += (msg.dataTypeByteLength/2);
+							}
+							
+						}
+						node.msgMem.payload = JSONData;
+					} else {
+						node.msgMem.payload = data;
+					}
+				}
+        node.send(node.msgMem);
       }
 
 			this.on('input', function (msg) {
 				if(node.busy)
 					return;//TODO: Consider queueing inputs?
-				var isObject = function(val) {
-						if (val === null) { return false;}
-						return ( (typeof val === 'function') || (typeof val === 'object') );
-				}
-				var addr = node.address; 
-				if(!addr)
-					addr = msg.topic;
 
-				if(!addr){
-					if(isObject(msg.payload)) {
-							addr = msg.payload.address; 
+				node.request = undefined;
+				node.msgMem = msg;
+
+				var addr;
+				RED.util.evaluateNodeProperty(node.address,node.addressType,node,msg,(err,value) => {
+					if (err) {
+						node.error("Unable to evaluate address");
+						node.status({fill:"red",shape:"ring",text:"Unable to evaluate address"});
+						return;
+					} else {
+						addr = value;
 					}
-					else if(msg.payload){
-						addr = msg.payload;
-					}
-				}
+				}); 
+
 				if(addr == "")	{
 					node.error("address is empty");
 					node.status({fill:"red",shape:"ring",text:"error"});
@@ -92,6 +162,13 @@ module.exports = function (RED) {
 				try {
 					node.status({fill:"yellow",shape:"ring",text:"read"});
 					node.busy = true;
+
+					node.request = { 
+						outputFormat: node.outputFormat ? 'Array' : 'JSON',
+						address: addr,
+            timeStamp: Date.now()
+					};
+
 					if (node.busyTimeMax) {
 						node.busyMonitor = setTimeout(function() {
 							if(node.busy){
