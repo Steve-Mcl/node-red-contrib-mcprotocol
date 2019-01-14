@@ -88,43 +88,42 @@ module.exports = function (RED) {
 					let loopBit = 0, bitNo = msg.bitOffset;
 					let JSONData = {};
 					if(node.outputFormat == 0/*JSON*/){
-						for (var x in data) {
-							let buff_address = '';
-			
-							if(msg.dataType == 'BIT' && msg.deviceCodeType != "BIT"){
-								bitNo = msg.bitOffset + loopBit;
-								if(bitNo == 16) iWD++;
-								if(bitNo >= 16){
-									bitNo = bitNo - 16
+						if(msg.valueType == "CHAR") {
+							if(msg.deviceCodeNotation == 'Hexadecimal'){
+								buff_address = `${msg.deviceCode}${Number(iWD).toString(16).toUpperCase()}`;
+							} else {
+								buff_address = `${msg.deviceCode}${iWD}`
+							}
+							JSONData[buff_address] =  data;
+						} else {
+							for (var x in data) {
+								let buff_address = '';
+								if(msg.dataType == 'BIT' && msg.deviceCodeType != "BIT"){
+									bitNo = msg.bitOffset + loopBit;
+									if(bitNo == 16) iWD++;
+									if(bitNo >= 16){
+										bitNo = bitNo - 16
+									}
+									if(msg.deviceCodeNotation == 'Hexadecimal'){
+										buff_address = `${msg.deviceCode}${Number(iWD).toString(16).toUpperCase()}.${Number(bitNo).toString(16).toUpperCase()}`
+									} else {
+										buff_address = `${msg.deviceCode}${iWD}.${Number(bitNo).toString(16).toUpperCase()}`
+									}
+									JSONData[buff_address] =  data[x];
+									loopBit++;
+									if(loopBit >= 16)
+										loopBit = 0;
+								} else {
+									if(msg.deviceCodeNotation == 'Hexadecimal'){
+										buff_address = `${msg.deviceCode}${Number(iWD).toString(16).toUpperCase()}`
+									} else {
+										buff_address = `${msg.deviceCode}${iWD}`
+									}
+									JSONData[buff_address] =  data[x];
+									iWD += (msg.dataTypeByteLength/2);
 								}
 								
-								switch(msg.deviceCodeNotation){
-									case 'Decimal':
-										buff_address = `${msg.deviceCode}${iWD}.${Number(bitNo).toString(16).toUpperCase()}`
-										JSONData[buff_address] =  data[x];
-									break;
-									case 'Hexadecimal':
-										buff_address = `${msg.deviceCode}${Number(iWD).toString(16).toUpperCase()}.${Number(bitNo).toString(16).toUpperCase()}`
-										JSONData[buff_address] =  data[x];
-									break;
-								}
-								loopBit++;
-								if(loopBit >= 16)
-									loopBit = 0;
-							} else {
-								switch(msg.deviceCodeNotation){
-									case 'Decimal':
-										buff_address = `${msg.deviceCode}${iWD}`
-										JSONData[buff_address] =  data[x];
-									break;
-									case 'Hexadecimal':
-										buff_address = `${msg.deviceCode}${Number(iWD).toString(16).toUpperCase()}`
-										JSONData[buff_address] =  data[x];
-									break;
-								}
-								iWD += (msg.dataTypeByteLength/2);
 							}
-							
 						}
 						node.msgMem.payload = JSONData;
 					} else {
