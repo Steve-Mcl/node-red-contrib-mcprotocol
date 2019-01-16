@@ -68,6 +68,9 @@ module.exports = {
             var reply = client.readItems(addr, callback);
             return reply;
           },
+          closeConnection: function(){
+            client.connectionReset();
+          },
           on: function (a, b) {
             client.on(a, b);
           },
