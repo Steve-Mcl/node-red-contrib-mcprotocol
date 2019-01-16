@@ -10,6 +10,11 @@ module.exports = function (RED) {
     this.connection = config.connection;
     this.address = config.address;
     this.data = config.data;
+    this.address = config.address || "";//address
+    this.addressType = config.addressType || "str";
+    this.data = config.data || "";//data
+    this.dataType = config.dataType || "num";
+
     this.connectionConfig = RED.nodes.getNode(this.connection);
     var context = this.context();
     var node = this;
@@ -60,36 +65,73 @@ module.exports = function (RED) {
         node.send(newMsg);
       }
       this.on('input', function (msg) {
-        if(node.busy)
+        if (node.busy)
           return;//TODO: Consider queueing inputs?
+        node.request = undefined;
+        node.msgMem = msg;
+
         var isObject = function(val) {
           if (val === null) { return false;}
           return ( (typeof val === 'function') || (typeof val === 'object') );
         }
-				var addr = node.address;  
-				var data = node.data; 
-				if(!addr)
-					addr = msg.topic;
-        if(!addr){
-          if(isObject(msg.payload) && msg.payload.address) {
-            addr = msg.payload.address;
-          } 
-        }
-				if(!data){
-          if(isObject(msg.payload) && msg.payload.data) {
-            data = msg.payload.data;
+        var addr;// = /* node.address || */ config.address || msg.payload.address; 
+        var data;
+        //address - address
+        RED.util.evaluateNodeProperty(node.address, node.addressType, node, msg, (err, value) => {
+          if (err) {
+            node.error("Unable to evaluate address");
+            node.status({ fill: "red", shape: "ring", text: "Unable to evaluate address" });
+            return;
           } else {
-            data = msg.payload
+            addr = value;
+            if (addr == "") {
+              node.error("address is empty");
+              node.status({ fill: "red", shape: "ring", text: "address is empty" });
+              return;
+            }
           }
+        });
+
+
+        //data - data
+        var csv2arr = function (str) {
+          return node.data.split(',').map(Number);
         }
-				if(!addr)	{
-					node.error("Address is empty");
-					return;
-				}
-				if(!data)	{
+        if (node.dataType == 'str') {
+          data = node.data;
+        } else if (node.dataType == 'num') {
+          data = [node.data];
+        } else if (node.dataType == 'csv') {
+          data = csv2arr(node.data);
+        } else {
+          RED.util.evaluateNodeProperty(node.data, node.dataType, node, msg, (err, value) => {
+            if (err) {
+              node.error("Unable to evaluate data");
+              node.status({ fill: "red", shape: "ring", text: "Unable to evaluate data" });
+              return;
+            } else {
+              if (typeof value === "string") {
+                data = csv2arr(value);
+              } else {
+                data = value;
+              }
+            }
+          });
+        }
+
+        if(!data)	{
 					node.error("Data is empty");
 					return;
-				}
+        }
+        
+        if (typeof data == "number") {
+          data = [data];
+        }
+        // if (data.length != count) {
+        //   node.error("data length and count are not equal");
+        //   node.status({ fill: "red", shape: "ring", text: "data length and count are not equal" });
+        //   return;
+        // }
         
         try {
           node.status({fill:"yellow",shape:"ring",text:"write"});
