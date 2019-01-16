@@ -1890,10 +1890,9 @@ function decodeResponseHeader(mcp, theData){
 		expectedResponse: undefined,
 		response: undefined,
 		endCode: undefined,
-		AccessRouteNetworkNo: undefined,
+		accessRouteNetworkNo: undefined,
 		accessPCNo: undefined,
 		accessRouteModuleIONo: undefined,
-		accessRouteModuleStationNo: undefined,
 		accessRouteModuleStationNo: undefined,
 		seq: undefined,
 		length: undefined,
@@ -2518,7 +2517,8 @@ MCProtocol.prototype.enumDeviceCodeSpecQ = _enum({
 	SW: {symbol: 'SW', type: 'WORD', notation: 'Hexadecimal', binary: 0xB5, ascii: 'SW', description: 'Link special register'},
 	DX: {symbol: 'DX', type: 'BIT', notation: 'Hexadecimal', binary: 0xA2, ascii: 'DX', description: 'Direct access input'},
 	DY: {symbol: 'DY', type: 'BIT', notation: 'Hexadecimal', binary: 0xA3, ascii: 'DY', description: 'Direct access output'},
-	ZR: {symbol: 'ZR', type: 'WORD', notation: 'Hexadecimal', binary: 0xB0, ascii: 'ZR', description: 'File register'},
+	//ZR: {symbol: 'ZR', type: 'WORD', notation: 'Hexadecimal', binary: 0xB0, ascii: 'ZR', description: 'File register'},  << Manual says hex, its actually decimal!!!
+	ZR: {symbol: 'ZR', type: 'WORD', notation: 'Decimal', binary: 0xB0, ascii: 'ZR', description: 'File register'},
 	X: {symbol: 'X', type: 'BIT', notation: 'Hexadecimal', binary: 0x9C, ascii: 'X*', description: 'Input'},
 	Y: {symbol: 'Y', type: 'BIT', notation: 'Hexadecimal', binary: 0x9D, ascii: 'Y*', description: 'Output'},
 	M: {symbol: 'M', type: 'BIT', notation: 'Decimal', binary: 0x90, ascii: 'M*', description: 'Internal relay'},
@@ -2877,9 +2877,12 @@ function PLCItem() { // Object
 			var AltAddressStyle = false; //Alt style combines DS and DT at position [1] e.g. [DS/DT] DEV DA [.BIT] [,CNT]
 			var strRegex = undefined;
 			if(AltAddressStyle)
-				strRegex = `(${allowedDigitSpecs}|${allowedDataTypes})?(${allowedDeviceTypes})(\\w+)(?:\\.?)?(.?)?(?:,)?(\\w+)?`;
+				strRegex = `(${allowedDigitSpecs}|${allowedDataTypes})?(${allowedDeviceTypes})(\\w+)(?:\\.?)?(.?)?(?:,)?(\\w+)?(?::)?({.*})?`;
 			else
-				strRegex = `(${allowedDigitSpecs})?(${allowedDeviceTypes})(${allowedDataTypes})?(\\w+)(?:\\.?)?(.?)?(?:,)?(\\w+)?`;
+				strRegex = `(${allowedDigitSpecs})?(${allowedDeviceTypes})(${allowedDataTypes})?(\\w+)(?:\\.?)?(.?)?(?:,)?(\\w+)?(?::)?({.*})?`;
+				//(K2|K4|K8)?(SM|SD|TS|TC|TN|STS|STC|STN|CS|CC|CN|SB|SW|DX|DY|ZR|X|Y|M|L|F|V|B|D|W|Z|R)(REAL|FLOAT|DWORD|DINT|WORD|UINT|INT|STR|CHAR|BYTE|BIT)?(\w+)(?:\.?)?(.?)?(?:,)?(\w+)?(?::)?({.*})?
+			
+			outputLog(`Matching address '${addr}' to regex '${strRegex}'.`, "DEBUG");
 
 			var matches = addr.match(strRegex);
 			if (!matches) {
@@ -2905,7 +2908,9 @@ function PLCItem() { // Object
 					deviceNo: matches[4], //e.g. 1000 | FF1 | E1A etc
 					bitNo: (!matches[5] || matches[5] == ",") ? "" : matches[5], //0 ~ F
 					deviceCount: matches[6] ? matches[6] : 1,
+					options: (matches[7]) ? JSON.parse(matches[7].replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ')) || {} : {}
 				}
+
 			outputLog(`${addr} == ${util.format(spec)}`, 2);
 
 			//determine the device area
@@ -2913,6 +2918,7 @@ function PLCItem() { // Object
 			theItem.datatype = spec.dataType; // eg "DINT"
 			theItem.deviceCode = spec.deviceCode;
 			theItem.prefix = theItem.digitSpec + theItem.deviceCode + theItem.datatype;
+			theItem.options = spec.options;
 
 			//get device number (if X / Y, then convert HEX to DEC)
 			let devNo = spec.deviceNo, radix = 10;
@@ -3343,8 +3349,11 @@ function PLCItem() { // Object
 				0x03FF = CPU
 			* (Byte) Request destination module station No. 
 			*/
-			MCCommand.addByte(network ? network : 0); // net
-			MCCommand.addByte(PCStation ? PCStation : 0xff); // PC No
+			let networkNo = network ? network : (this.options.N || 0);
+			let stationNo = PCStation ? PCStation : (this.options.S || 0xff);
+
+			MCCommand.addByte(networkNo); // net
+			MCCommand.addByte(stationNo); // PC No
 			MCCommand.addUint16LE(PLCModuleNo ? PLCModuleNo : 0x3FF); //03ff // Request destination module I/O No //for multidrop/routing
 			MCCommand.addByte(PLCStation ? PLCStation : 0); //0x0 // Request destination module station No //for multidrop/routing
 			pos += 5;

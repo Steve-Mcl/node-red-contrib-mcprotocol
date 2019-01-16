@@ -90,23 +90,26 @@
     <dd>Additional details of the PLC read result. Use debug node to inspect the data</dd>
   </dl>
   <h3>Details</h3>
-  <p><code>msg.topic</code> can be used to provide address.  
-  Topic will only be used if <code>address</code> node property is left blank.</p>
-  <p>Address format [DS] DEV [DT] DA [.BIT] [,CNT] ...  
+  <p>
+    If an error occurs the output of this node may still be triggered. 
+    In this case, the payload will be <code>null</code> but the <code>mcWriteDetails</code> will contain additional information about the problem.
+  </p>
+  <p>Address format [DS] DEV [DT] DA [.BIT] [,CNT] [:OPTS]...  
       <ol>
-          <li>[1] DS	- digit specifier (e.g. K4) [optional]</li>
-          <li>[2] DEV - Device (Y|X|D|F|W|B|R|etc)</li>
-          <li>[3] DT 	- data type (REAL|FLOAT|STR|DWORD|DINT) [optional]</li>
-          <li>[4] DA 	- Device Address</li>
-          <li>[5] BIT - bit number [optional]</li>
-          <li>[6] CNT - count of items [optional]</li>
+        <li>[1] DS	 - {string} Digit specifier (e.g. K4) [optional]</li>
+        <li>[2] DEV  - {string} Device (Y|X|D|F|W|B|R|etc)</li>
+        <li>[3] DT 	 - {string} Data type (REAL|FLOAT|STR|DWORD|DINT) [optional]</li>
+        <li>[4] DN 	 - {int} Device number</li>
+        <li>[5] BIT  - {int} Bit number [optional]</li>
+        <li>[6] CNT  - {int} Count of items [optional]</li>
+        <li>[7] OPTS - {JSON} Options for specifying network and station e.g. {N:2,S:3} would attempt to route the message to station 3 on network 2 [optional]</li>
       </ol>
   </p>
-  <p>data must match the address style e.g...
+  <p>data returned will match the address specified e.g...
     <table>
       <tr>
         <td>Address Example</td>
-        <td>Expected Type</td>
+        <td>Data Type</td>
         <td>Notes</td>
         </tr>
       <tr>
