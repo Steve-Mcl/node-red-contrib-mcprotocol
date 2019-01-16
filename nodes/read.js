@@ -134,6 +134,14 @@ module.exports = function (RED) {
       }
 
 			this.on('input', function (msg) {
+				if(msg.disconnect === true || msg.topic === 'disconnect'){
+					this.client.closeConnection();
+					return;
+				} else if(msg.connect === true || msg.topic === 'connect'){
+					this.client.connect();
+					return;
+				} 
+
 				if(node.busy)
 					return;//TODO: Consider queueing inputs?
 
