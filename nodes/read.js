@@ -19,18 +19,18 @@ module.exports = function (RED) {
     //var mcprotocol = require('../mcprotocol.js');
     if (this.connectionConfig) {
 			var options = Object.assign({}, node.connectionConfig.options);
-      node.client = connection_pool.get(this.connectionConfig.port, this.connectionConfig.host, options);
+      node.connection = connection_pool.get(this.connectionConfig.port, this.connectionConfig.host, options);
       node.status({fill:"yellow",shape:"ring",text:"initialising"});
 
-      this.client.on('error', function (error) {
+      this.connection.on('error', function (error) {
         console.log("Error: ", error);
 				node.status({fill:"red",shape:"ring",text:"error"});
 				node.busy = false;
       });
-      this.client.on('open', function (error) {
+      this.connection.on('open', function (error) {
         node.status({fill:"green",shape:"dot",text:"connected"});
       });
-      this.client.on('close', function (error) {
+      this.connection.on('close', function (error) {
 				node.status({fill:"red",shape:"dot",text:"not connected"});
 				node.busy = false;
       });
@@ -135,13 +135,13 @@ module.exports = function (RED) {
 
 			this.on('input', function (msg) {
 				if(msg.disconnect === true || msg.topic === 'disconnect'){
-					this.client.closeConnection();
+					this.connection.closeConnection();
 					return;
 				} else if(msg.connect === true || msg.topic === 'connect'){
-					this.client.connect();
+					this.connection.connect();
 					return;
-				} 
-
+        } 
+         
 				if(node.busy)
 					return;//TODO: Consider queueing inputs?
 
@@ -186,7 +186,7 @@ module.exports = function (RED) {
 							}
 						}, node.busyTimeMax);
 					}
-					this.client.read(addr, myReply);
+					this.connection.read(addr, myReply);
 				} catch (error) {
           node.busy = false;
           node.error(error);
@@ -210,8 +210,8 @@ module.exports = function (RED) {
 	}
 	RED.nodes.registerType("MC Read", mcRead);
 	mcRead.prototype.close = function() {
-		if (this.client) {
-			this.client.disconnect();
+		if (this.connection) {
+			this.connection.disconnect();
 		}
 	}
 };

@@ -25,16 +25,16 @@ module.exports = function (RED) {
 
       node.status({fill:"yellow",shape:"ring",text:"initialising"});
 			var options = Object.assign({}, node.connectionConfig.options);
-      this.client = connection_pool.get(this.connectionConfig.port, this.connectionConfig.host, options);
+      this.connection = connection_pool.get(this.connectionConfig.port, this.connectionConfig.host, options);
 
-      this.client.on('error', function (error) {
+      this.connection.on('error', function (error) {
         console.log("Error: ", error);
         node.status({fill:"red",shape:"ring",text:"error"});
       });
-      this.client.on('open', function (error) {
+      this.connection.on('open', function (error) {
         node.status({fill:"green",shape:"dot",text:"connected"});
       });
-      this.client.on('close', function (error) {
+      this.connection.on('close', function (error) {
         node.status({fill:"red",shape:"dot",text:"not connected"});
       });
 
@@ -66,10 +66,10 @@ module.exports = function (RED) {
       }
       this.on('input', function (msg) {
 				if(msg.disconnect === true || msg.topic === 'disconnect'){
-					this.client.closeConnection();
+					this.connection.closeConnection();
 					return;
 				} else if(msg.connect === true || msg.topic === 'connect'){
-					this.client.connect();
+					this.connection.connect();
 					return;
         } 
          
@@ -154,13 +154,13 @@ module.exports = function (RED) {
               }
             }, node.busyTimeMax);
           }          
-          this.client.write(addr, data, myReply);
+          this.connection.write(addr, data, myReply);
         } catch (error) {
           node.busy = false;
           node.error(error);
           node.status({fill:"red",shape:"ring",text:"error"});
           var dbgmsg = { 
-						info: "write.js-->on 'input' - try this.client.write(addr, data, myReply)",
+						info: "write.js-->on 'input' - try this.connection.write(addr, data, myReply)",
             connection: `host: ${node.connectionConfig.host}, port: ${node.connectionConfig.port}`, 
             address: addr,
             data: data,
@@ -181,8 +181,8 @@ module.exports = function (RED) {
   }
   RED.nodes.registerType("MC Write", mcWrite);
   mcWrite.prototype.close = function() {
-		if (this.client) {
-			this.client.disconnect();
+		if (this.connection) {
+			this.connection.disconnect();
 		}
 	}
 };
