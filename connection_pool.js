@@ -66,7 +66,7 @@ module.exports = {
           _instances: 0,
           write: function (addr, data, callback) {
             if(!mcp.isConnected()){
-              this.connect();
+              //this.connect();
               throw new Error("Not connected!")
             }
             var reply = mcp.writeItems(addr, data, callback);
@@ -74,7 +74,7 @@ module.exports = {
           },
           read: function (addr, callback) {
             if(!mcp.isConnected()){
-              this.connect();
+              //this.connect();
               throw new Error("Not connected!")
             }
             var reply = mcp.readItems(addr, callback);
