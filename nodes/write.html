@@ -65,24 +65,17 @@
     <input type="text" id="node-input-connection">
   </div>
   <div class="form-row">
-    <label for="node-input-address"><i class="icon-tag"></i> <span data-i18n="write.label.address"> Address</span></label>
-    <input type="text" id="node-input-address" placeholder="e.g. D10 or leave blank to use payload.address">
-  </div>
-  <div class="form-row">
-    <label for="node-input-data"><i class="icon-tag"></i> <span data-i18n="write.label.data"> Data</span></label>
-    <input type="text" id="node-input-data" placeholder="e.g. 1,2,3 or leave blank to use payload.data">
-  </div>
-
-  <div class="form-row">
-    <label for="node-input-address"><i class="fa fa-envelope"></i> Address</label>
+    <label for="node-input-address"><i class="fa fa-envelope"></i><span data-i18n="ab-df1-read.label.address"> Address</span></label>
     <input type="hidden" id="node-input-addressType">
     <input style="width: 70%" type="text" id="node-input-address" placeholder="D0">
   </div>
+
   <div class="form-row">
-    <label for="node-input-data"><i class="fa fa-table"></i> Data</label>
+    <label for="node-input-data"><i class="fa fa-table"></i> <span data-i18n="write.label.data"> Data</span></label>
     <input type="hidden" id="node-input-dataType">
-    <input style="width: 70%" id="node-input-data" placeholder="">
-  </div>    
+    <input style="width: 70%" type="text" id="node-input-data" >
+  </div>
+ 
 </script>
 
 <script type="text/x-red" data-help-name="MC Write">
