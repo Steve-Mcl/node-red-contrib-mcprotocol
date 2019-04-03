@@ -332,6 +332,11 @@ MCProtocol.prototype.connectNow = function (cParam, suppressCallback) { // TODO 
 	self.isoclient.on('error', function () {
 		self.connectError.apply(self, arguments);
 	});
+	
+	self.isoclient.on('close', function () {
+		self.onClientDisconnect.apply(self, arguments);
+	});
+
 
 	outputLog('<initiating a new connection>', "INFO", self.connectionID);
 	outputLog('Attempting to connect to host...', "DEBUG", self.connectionID);
@@ -1689,8 +1694,9 @@ MCProtocol.prototype.readResponse = function (data, decodedHeader) {
 
 }
 
-MCProtocol.prototype.onClientDisconnect = function () {
+MCProtocol.prototype.onClientDisconnect = function (err) {
 	var self = this;
+	self.emit('close',err);
 	outputLog('EIP/TCP DISCONNECTED.');
 	self.connectionCleanup();
 	self.tryingToConnectNow = false;
