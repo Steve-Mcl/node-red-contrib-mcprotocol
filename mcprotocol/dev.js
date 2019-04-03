@@ -36,7 +36,10 @@ var TESTRESULTS = [];
 		  D100_3b: 'D6402',		// 	
 		  M1000: 'M2500,17',		// 	
 		  Y: 'Y0,16',		// 	
-		  F3: 'F1000,12',		// 	
+      F3: 'F1000,12',		// 	
+      TandDA_D0: "D0,100",
+      TandSA1_D0: "D0,100:{n:2,s:2}",
+      TandSA2_D0: "D0,100:{n:2,s:3}",
 	};										// See setTranslationCB below for more examples
 
 /* tests (Q06UDEH)...
@@ -205,11 +208,26 @@ const dec2hex = convert(10, 16);
 
 //	conn.initiateConnection({port: 1031, host: '172.20.4.57', ascii: false}, connected); 
 	//conn.initiateConnection({port: 1031, host: '172.20.4.113', frame: '3E', ascii: false}, connected); 
-	conn.initiateConnection({port: 1025, host: '172.20.4.55'/*rig*/, frame: '4E', ascii: false, plcType: "Q"}, connected); 
+	//conn.initiateConnection({port: 1025, host: '172.20.4.55'/*rig*/, frame: '4E', ascii: false, plcType: "Q"}, connected); 
+  //NGconn.initiateConnection({port: 5001, host: '172.20.4.119'/*32#1 RFID*/, PCStation: 2, frame: '4E', ascii: false, plcType: "Q"}, connected); 
+   //conn.initiateConnection({port: 1028, host: '172.20.4.40'/*Tand DA*/,  frame: '4E', ascii: false, plcType: "Q"}, connected); 
+  //conn.initiateConnection({port: 1027, host: '172.20.4.25'/*XL LOP*/,  frame: '3E', ascii: false, plcType: "Q"}, connected); 
   // conn.initiateConnection({
   //   port: 1031, host: '172.20.4.176', ascii: false, frame: '3E', plcType: 'Q/L',
   //   network: 1, PCStation: 5, PLCStation: 1
   //   }, connected); //27#2 plc2
+
+  //DA  172.20.4.40 N1 S10
+  //SA1 172.20.4.33 N1 S33
+
+
+  conn.initiateConnection({
+    port: 1027, host: '172.20.4.25', ascii: false, frame: '3E', plcType: 'Q/L',
+    //port: 1027, host: '172.20.4.40', ascii: false, frame: '3E', plcType: 'Q/L',
+    //network: 2, PCStation: 2//,  PLCStation: 0, PLCModuleNo: 2
+    //network: 1, PCStation: 16//,  PLCStation: 0, PLCModuleNo: 2
+    /*network: 1, /*PCStation: 3, PLCStation: 3, PLCModuleNo: 10*/
+    }, connected); // 
 
   var donecount = 0;
   var callcount = 1;
@@ -217,6 +235,68 @@ const dec2hex = convert(10, 16);
   var cb = function(err,result){
     var r = JSON.stringify(result);
     var r2 = "";
+
+    if(result && result.isGood){
+      var msg = result;
+      let data = msg.value;
+      let iWD = msg.deviceNo;
+      let loopBit = 0, bitNo = msg.bitOffset;
+      let JSONData = {};
+      if(msg.valueType == "CHAR") {
+        switch(msg.deviceCodeNotation){
+          case 'Decimal':
+            buff_address = `${msg.deviceCode}${iWD}`
+          break;
+          case 'Hexadecimal':
+            buff_address = `${msg.deviceCode}${Number(iWD).toString(16).toUpperCase()}`;
+          break;
+        }
+        JSONData[buff_address] =  data;
+      } else {
+
+        for (var x in data) {
+          let buff_address = '';
+
+          if(msg.dataType == 'BIT' && msg.deviceCodeType != "BIT"){
+            bitNo = msg.bitOffset + loopBit;
+            if(bitNo == 16) iWD++;
+            if(bitNo >= 16){
+              bitNo = bitNo - 16
+            }
+            
+            switch(msg.deviceCodeNotation){
+              case 'Decimal':
+                buff_address = `${msg.deviceCode}${iWD}.${Number(bitNo).toString(16).toUpperCase()}`
+                JSONData[buff_address] =  data[x];
+              break;
+              case 'Hexadecimal':
+                buff_address = `${msg.deviceCode}${Number(iWD).toString(16).toUpperCase()}.${Number(bitNo).toString(16).toUpperCase()}`
+                JSONData[buff_address] =  data[x];
+              break;
+            }
+            loopBit++;
+            if(loopBit >= 16)
+              loopBit = 0;
+          } else {
+            switch(msg.deviceCodeNotation){
+              case 'Decimal':
+                buff_address = `${msg.deviceCode}${iWD}`
+                JSONData[buff_address] =  data[x];
+              break;
+              case 'Hexadecimal':
+                buff_address = `${msg.deviceCode}${Number(iWD).toString(16).toUpperCase()}`
+                JSONData[buff_address] =  data[x];
+              break;
+            }
+            iWD += (msg.dataTypeByteLength/2);
+          }
+          
+        }
+      }
+      console.log(`${timeStamp()} 📒 read callback. result - ${(err ? "🛑" : "👍")}. value...\n ${JSON.stringify(JSONData) }`); 
+    }
+
+
     if(result && (result.valueType == "UINT" || result.valueType == "INT"  || result.valueType == "WORD" ) && result.value && Array.isArray(result.value)){
       result.value.forEach(function(el){
         if(r2) r2 += ",";
@@ -238,6 +318,18 @@ const dec2hex = convert(10, 16);
 			process.exit();
     }
     
+    conn.on('error', function (e) {
+        console.log(`[mcprotocol] error ~ ${id}: ${e}`);
+    });
+    conn.on('open', function () {
+        util.log(`[mcprotocol] connected ~ ${id}`);
+    });
+    conn.on('close', function (err) {
+      util.log(`[mcprotocol] connection closed ~ ${id}`);
+    });
+
+
+
     // Setup TAG ~ Address "translation" (allow us to work with defined names in our app) 
     //NOTE: this is optional as we can use 'proper' addresses instead of TAG names
 		conn.setTranslationCB(function(tag) {
@@ -253,8 +345,23 @@ const dec2hex = convert(10, 16);
       //let ttt = new testWriteRead(conn, "D100",100,function(dummy){return seqArray(1000,1099);}, "1000-1099 INT in D1000");
       //ttt.runTest();
       //conn.writeItems("D0,100",seqArray(0,99),wcb) ;	//OK
-      conn.readItems("SM400,101",cb) ;	//
-      conn.readItems("SD212,101",cb) ;	//
+      
+      conn.readItems("D0,10",cb) ;	//
+      conn.readItems("D0,10:{n:1,s:3}",cb) ;	//
+      conn.readItems("D0,10:{n:1,s:1}",cb) ;	//
+      conn.close
+      // conn.readItems("TandDA_D0",cb) ;	//
+      // conn.readItems("TandSA1_D0",cb) ;	//
+      // conn.readItems("TandSA2_D0",cb) ;	//
+      // conn.readItems("D0,10:{n:2,s:2}",cb) ;	//
+      // conn.readItems("D0,10:{n:2,s:3}",cb) ;	//
+      // conn.readItems("D0,10:{n:2,s:4}",cb) ;	//
+      //conn.readItems("K8X5,20",cb) ;	//
+      //conn.readItems("RDWORD2,20",cb) ;	//
+      //conn.readItems("ZR700000,20",cb) ;	//
+
+      // conn.readItems("SM400,101",cb) ;	//
+      // conn.readItems("SD212,101",cb) ;	//
     }
 
 
