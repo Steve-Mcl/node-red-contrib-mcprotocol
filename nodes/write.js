@@ -102,27 +102,37 @@ module.exports = function (RED) {
 
 
         //data - data
-        var csv2arr = function (str) {
-          return node.data.split(',').map(Number);
-        }
+        console.log("node.data...")       ;
+        console.log(node.data)       ;
+
+        // var csv2arr = function (str) {
+        //   return node.data.split(',').map(Number);
+        // }
         if (node.dataType == 'str') {
+          console.log("mcwrite input:node.dataType == 'str'")       ;
           data = node.data;
         } else if (node.dataType == 'num') {
-          data = [node.data];
+          console.log("mcwrite input:node.dataType == 'num'")       ;
+          //data = [node.data];
+          data = node.data;
         } else if (node.dataType == 'csv') {
-          data = csv2arr(node.data);
+          console.log("mcwrite input:node.dataType == 'csv'")       ;
+          //data = csv2arr(node.data);
+          data = node.data;
         } else {
+          console.log("mcwrite input:evaluateNodeProperty")       ;
           RED.util.evaluateNodeProperty(node.data, node.dataType, node, msg, (err, value) => {
             if (err) {
               node.error("Unable to evaluate data");
               node.status({ fill: "red", shape: "ring", text: "Unable to evaluate data" });
               return;
             } else {
-              if (typeof value === "string") {
-                data = csv2arr(value);
-              } else {
-                data = value;
-              }
+              // if (typeof value === "string") {
+              //   data = csv2arr(value);
+              // } else {
+              //   data = value;
+              // }
+              data = value;
             }
           });
         }
@@ -132,9 +142,11 @@ module.exports = function (RED) {
 					return;
         }
         
-        if (typeof data == "number") {
-          data = [data];
-        }
+        // if (typeof data == "number") {
+        //   console.log('mcwrite input:data == "number"')       ;
+        //   data = [data];
+        // }
+        
         // if (data.length != count) {
         //   node.error("data length and count are not equal");
         //   node.status({ fill: "red", shape: "ring", text: "data length and count are not equal" });
@@ -153,7 +165,12 @@ module.exports = function (RED) {
                 return;
               }
             }, node.busyTimeMax);
-          }          
+          }   
+
+          console.log("mcwrite input:  addr,  data...")       ;
+          console.log(addr)       ;
+          console.log(data)       ;
+
           this.connection.write(addr, data, myReply);
         } catch (error) {
           node.busy = false;
