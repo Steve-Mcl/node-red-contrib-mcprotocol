@@ -84,75 +84,33 @@
   <dl class="message-properties">
     <dt class="required">Connection<span class="property-type">DF1 Connection</span></dt>
     <dd>The PLC connection</dd>
-    <dt class="required">Address<span class="property-type">string</span></dt>
+    <dt class="required">Address<span class="property-type">number | string | payload</span></dt>
     <dd>PLC Memory Address</dd>
-    <dt class="required">Data<span class="property-type">Array<number> | number | string </span></dt>
+    <dt class="required">Data<span class="property-type">Array<number> | number | string | payload </span></dt>
     <dd>Data to be written to PLC starting at specified address.</dd>
   </dl>
   <h3>Outputs</h3>
   <dl class="message-properties">
-    <dt>payload <span class="property-type">boolean</span></dt>
-    <dd>Payload will be <code>true</code> if the PLC write command was successful.</dd>
-    <dt>mcWriteDetails <span class="property-type">object</span></dt>
-    <dd>Additional details of the PLC write result. Use debug node to inspect the object</dd>
+    <dt>payload <span class="property-type">object</span></dt>
+    <dd>Payload will contain properties like <code>isGood</code>, <code>quality</code>, <code>TAG</code> etc.  The user should inspect these to determine if the PLC write command was successful.</dd>
+    <dd>Use a debug node to inspect the object</dd>
   </dl>
   <h3>Details</h3>
   <p>
     If an error occurs the output of this node may still be triggered. 
     In this case, the payload will be <code>null</code> but the <code>mcWriteDetails</code> will contain additional information about the problem.
   </p>
-  <p>Address format [DS] DEV [DT] DN [.BIT] [,CNT] [:OPTS] ...  
+  <p>Address format [DS] DEV [DT] DN [.BIT] [,CNT] [:OPTS]...  
     <ol>
       <li>[1] DS	 - {string} Digit specifier (e.g. K4) [optional]</li>
       <li>[2] DEV  - {string} Device (Y|X|D|F|W|B|R|etc)</li>
-      <li>[3] DT 	 - {string} Data type (REAL|FLOAT|STR|DWORD|DINT) [optional]</li>
+      <li>[3] DT 	 - {string} Data type (REAL|FLOAT|STR|WORD|DWORD|DINT|UINT) [optional]</li>
       <li>[4] DN 	 - {int} Device number</li>
       <li>[5] BIT  - {int} Bit number [optional]</li>
       <li>[6] CNT  - {int} Count of items [optional]</li>
       <li>[7] OPTS - {JSON} Options for specifying network and station e.g. {N:2,S:3} would attempt to route the message to station 3 on network 2 [optional]</li>
     </ol>
-    <i>Notes: DS and DT cannot be used together. if CNT is omitted, then <code>1</code> is assumed. DN may be DEC or HEX depending on the notation of the Device e.g. YA, X1E, WBA4, B3D   </i> 
-  </p>
-  <p>data must match the address style e.g...
-    <table>
-      <tr>
-        <td>Address Example</td>
-        <td>Expected Type</td>
-        <td>Notes</td>
-        </tr>
-      <tr>
-        <td>K4Y0</td>
-        <td>int</td>
-        <td>−32,768 to 32,767</td>
-        </tr>
-      <tr>
-        <td>DSTR0,10</td>
-        <td>string</td>
-        <td>Upto 10 chars long</td>
-        </tr>
-      <tr>
-        <td>DUINT0,10</td>
-        <td>UINT[10]</td>
-        <td>10 WD array containing values 0 to 65535</td>
-        </tr>
-    </table>
-  </p>
-  <h3>Details</h3>
-  <p>
-    If an error occurs the output of this node may still be triggered. 
-    In this case, the payload will be <code>null</code> but the <code>mcWriteDetails</code> will contain additional information about the problem.
-  </p>
-  <p>Address format [DS] DEV [DT] DN [.BIT] [,CNT] [:OPTS] ...  
-    <ol>
-      <li>[1] DS	 - {string} Digit specifier (e.g. K4) [optional]</li>
-      <li>[2] DEV  - {string} Device (Y|X|D|F|W|B|R|etc)</li>
-      <li>[3] DT 	 - {string} Data type (REAL|FLOAT|STR|DWORD|DINT) [optional]</li>
-      <li>[4] DN 	 - {int} Device number</li>
-      <li>[5] BIT  - {int} Bit number [optional]</li>
-      <li>[6] CNT  - {int} Count of items [optional]</li>
-      <li>[7] OPTS - {JSON} Options for specifying network and station e.g. {N:2,S:3} would attempt to route the message to station 3 on network 2 [optional]</li>
-    </ol>
-    <i>Notes: DS and DT cannot be used together. if CNT is omitted, then <code>1</code> is assumed. DN may be DEC or HEX depending on the notation of the Device e.g. YA, X1E, WBA4, B3D   </i> 
+    <i>Notes...<br>DS and DT should not be used together. <br>if CNT is omitted, then <code>1</code> is assumed. <br>DN may be DEC or HEX depending on the notation of the Device e.g. YA, X1E, WBA4, B3D   </i> 
   </p>
   <p>data must match the address style e.g...
     <table>
