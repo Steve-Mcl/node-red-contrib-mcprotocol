@@ -81,13 +81,13 @@
     <dd>The PLC connection</dd>
     <dt class="required">Address<span class="property-type">number | string | payload</span></dt>
     <dd>PLC Memory Address</dd>
+    <i>INFO: To open / close the MC Protocol connection, send <code>'connect'</code> or <code>'disconnect'</code> as a string in <code>msg.topic</code> to the any mc read / mc write node.</i>
   </dl>
   <h3>Outputs</h3>
   <dl class="message-properties">
     <dt>payload <span class="property-type">array | object</span></dt>
     <dd>the values read from the PLC.</dd>
-    <dt>mcReadDetails <span class="property-type">object</span></dt>
-    <dd>Additional details of the PLC read result. Use debug node to inspect the data</dd>
+    <i>To view additional details of the PLC read result, use a debug node to inspect the data</i>
   </dl>
   <h3>Details</h3>
   <p>
