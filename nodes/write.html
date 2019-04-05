@@ -88,18 +88,20 @@
     <dd>PLC Memory Address</dd>
     <dt class="required">Data<span class="property-type">Array<number> | number | string | payload </span></dt>
     <dd>Data to be written to PLC starting at specified address.</dd>
-    <i>INFO: To open / close the MC Protocol connection, send <code>'connect'</code> or <code>'disconnect'</code> as a string in <code>msg.topic</code> to the any mc read / mc write node.</i>
+    <p><i>INFO: To open / close the MC Protocol connection, send boolean <code>true</code> in <code>msg.connect</code> or <code>msg.disconnect</code>.  Alternatively, send string <code>connect</code> or <code>disconnect</code> in <code>msg.topic</code> to the any mc read / mc write node.</i></p>
   </dl>
   <h3>Outputs</h3>
   <dl class="message-properties">
-    <dt>payload <span class="property-type">object</span></dt>
-    <dd>Payload will contain properties like <code>isGood</code>, <code>quality</code>, <code>TAG</code> etc.  The user should inspect these to determine if the PLC write command was successful.</dd>
+    <dt>payload <span class="property-type">boolean</span></dt>
+    <dd>Payload will be <code>true</code> if successful</dd>
+    <dt>mcWriteDetails <span class="property-type">object</span></dt>
+    <dd><code>msg.mcWriteDetails</code> will contain properties like <code>isGood</code>, <code>quality</code>, <code>TAG</code> etc.  The user should inspect these to determine if the PLC write command was unsuccessful.</dd>
     <dd>Use a debug node to inspect the object</dd>
   </dl>
   <h3>Details</h3>
   <p>
     If an error occurs the output of this node may still be triggered. 
-    In this case, the payload will be <code>null</code> but the <code>mcWriteDetails</code> will contain additional information about the problem.
+    In this case, the payload maybe invalid but the <code>mcWriteDetails</code> will contain additional information about the problem.
   </p>
   <p>Address format [DS] DEV [DT] DN [.BIT] [,CNT] [:OPTS]...  
     <ol>
