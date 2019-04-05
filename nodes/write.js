@@ -60,9 +60,10 @@ module.exports = function (RED) {
 					node.status({fill:"green",shape:"dot",text:"Good"});
 				}
         
-        var newMsg = {payload: msg, name: node.name, topic : node.topic};
-
-        node.send(newMsg);
+        node.msgMem.payload = !problem;
+        node.msgMem.mcWriteDetails = msg;
+        node.send(node.msgMem);
+        
       }
       this.on('input', function (msg) {
 				if(msg.disconnect === true || msg.topic === 'disconnect'){
@@ -146,7 +147,7 @@ module.exports = function (RED) {
         //   console.log('mcwrite input:data == "number"')       ;
         //   data = [data];
         // }
-        
+
         // if (data.length != count) {
         //   node.error("data length and count are not equal");
         //   node.status({ fill: "red", shape: "ring", text: "data length and count are not equal" });
