@@ -1,11 +1,12 @@
 {
     "name": "node-red-contrib-mcprotocol",
-    "version": "0.0.6",
+    "version": "0.1.0",
     "description": "MC PROTOCOL functions 'Read' and 'write' for communicating with MITSUBISHI PLCs from node-red",
     "keywords": [
         "node-red",
         "MITSUBISHI",
-        "MC PROTOCOL"
+        "MC PROTOCOL",
+        "MELSEC"
     ],
     "node-red": {
         "nodes": {

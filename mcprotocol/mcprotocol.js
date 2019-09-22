@@ -33,6 +33,7 @@
 // when using this library.  Test thoroughly in a laboratory environment.
 
 var net = require("net");
+var dgram = require('dgram');
 var EventEmitter = require('events').EventEmitter;
 var util = require("util");
 var inherits = require('util').inherits
@@ -55,8 +56,8 @@ function MCProtocol() {
 	self.resetTimeout = undefined;
 
 	self.maxPDU = 255;
-	self.isoclient = undefined;
-	self.isoConnectionState = 0;
+	self.netClient = undefined;
+	self.connectionState = 0;
 	self.requestMaxParallel = 1;
 	self.maxParallel = 1;				// MC protocol is read/response.  Parallel jobs not supported.
 	self.isAscii = false;
@@ -94,10 +95,10 @@ inherits(MCProtocol, EventEmitter);
 
 MCProtocol.prototype.isConnected = function () {
 	var self = this;
-	return self.isoConnectionState == 4;
+	return self.connectionState == 4;
 }
 MCProtocol.prototype.setDebugLevel = function (level) {
-	var l = (level + "").toUpperCase;
+	var l = (level + "").toUpperCase();
 	switch (l) {
 		case 'TRACE':
 			effectiveDebugLevel = 4;
@@ -161,6 +162,7 @@ MCProtocol.prototype.initiateConnection = function (cParam, callback) {
 	}
 	if (typeof (cParam.plcType) === 'undefined') {
 		self.plcType = MCProtocol.prototype.enumPLCTypes.Q.name;
+		self.enumDeviceCodeSpec = MCProtocol.prototype.enumDeviceCodeSpecQ;//default to Q/L series
 		outputLog(`plcType not provided, defaulting to Q series PLC`,"WARN");
 	} else {
 		self.plcType = cParam.plcType;
@@ -170,11 +172,12 @@ MCProtocol.prototype.initiateConnection = function (cParam, callback) {
 		} 
 		
 		self.plcSeries = MCProtocol.prototype.enumPLCTypes[self.plcType];
-		MCProtocol.prototype.enumDeviceCodeSpec = MCProtocol.prototype['enumDeviceCodeSpec' + self.plcType];
+		//not sure how best to handle A/QnA series - not even sure A series can do 3E/4E frames!
+		//for now, default to Q (will be overwritten below if user choses 1E frames)
+		self.enumDeviceCodeSpec = MCProtocol.prototype['enumDeviceCodeSpec' + self.plcType] || MCProtocol.prototype.enumDeviceCodeSpecQ;
 
 		outputLog(`'plcType' set is ${self.plcType}`,"INFO");
 	}
-
 
 	if (typeof (cParam.frame) === 'undefined') {
 		outputLog(`'frame' not provided, defaulting '3E'.  Valid options are 1E, 3E, 4E.`,"WARN");
@@ -183,7 +186,7 @@ MCProtocol.prototype.initiateConnection = function (cParam, callback) {
 		switch (cParam.frame.toUpperCase()) {
 			case '1E':
 				self.frame = '1E';
-				MCProtocol.prototype.enumDeviceCodeSpec = MCProtocol.prototype.enumDeviceCodeSpec1E;
+				self.enumDeviceCodeSpec = MCProtocol.prototype.enumDeviceCodeSpec1E;
 				break;
 			case '3E':
 				self.frame = '3E';
@@ -198,6 +201,10 @@ MCProtocol.prototype.initiateConnection = function (cParam, callback) {
 		}
 		self.frame = cParam.frame;
 		outputLog(`'frame' set is ${self.frame}`,"INFO");
+	}
+
+	if(!self.enumDeviceCodeSpec){
+		throw new Error("Error determinng device code specification. Check combination of PLC Type and Frame Type are valid");
 	}
 
 	if (typeof (cParam.PLCStation) !== 'undefined') {
@@ -305,41 +312,124 @@ MCProtocol.prototype.initiateConnection = function (cParam, callback) {
 
 MCProtocol.prototype.dropConnection = function () {
 	var self = this;
-	try {
-		outputLog(`dropConnection() called`, "TRACE", self.connectionID);
-		if (typeof (self.isoclient) !== 'undefined') {
-			self.isoclient.end();
+	outputLog(`dropConnection() called`, "TRACE", self.connectionID);
+	if(self.connectionParams.protocol == "UDP"){
+		//TODO - implement UDP
+		try {
+			if(self.netClient){
+				self.netClient.close();
+			}
+		} catch (error) {
+			outputLog(`dropConnection() caused an error error: ${error}`, "ERROR", self.connectionID);
 		}
-		self.connectionCleanup();  // TODO - check this.
-	} catch (error) {
-		outputLog(`dropConnection() caused an error error: ${error}`, "ERROR", self.connectionID);
+	} else {
+		try {
+			if (typeof (self.netClient) !== 'undefined') {
+				self.netClient.end();
+			}
+		} catch (error) {
+			outputLog(`dropConnection() caused an error error: ${error}`, "ERROR", self.connectionID);
+		}
 	}
-
+	self.connectionCleanup(); 
+	self.connected = false;
 }
+
+MCProtocol.prototype.close = function () {
+    this.dropConnection();
+};
 
 MCProtocol.prototype.connectNow = function (cParam, suppressCallback) { // TODO - implement or remove suppressCallback
 	var self = this;
-	// Don't re-trigger.
-	if (self.isoConnectionState >= 1) { return; }
-	self.connectionCleanup();
-	self.isoclient = net.connect(cParam, function () {
-		self.isoclient.setKeepAlive(true, 2500); // For reliable unplug detection in most cases - although it takes 10 minutes to notify
-		self.onTCPConnect.apply(self, arguments);
-	});
 
-	self.isoConnectionState = 1;  // 1 = trying to connect
+	if (self.connectionParams.protocol == "UDP") {
+		//TODO - implement UDP
 
-	self.isoclient.on('error', function () {
-		self.connectError.apply(self, arguments);
-	});
+		if (self.netClient) {
+			self.netClient.removeAllListeners();
+			delete self.netClient;
+		}
+		self.netClient = dgram.createSocket('udp4');
+		self.connected = false;
+		self.requests = {};
+
+		function close() {
+			self.connectionState = 0;
+			self.emit('close');
+			self.connected = false;
+		}
+
+
+
+		
+
+		// self.netClient.on('listening', function () {
+		// 	self.onUDPConnect.apply(self, arguments);
+		// });
+		self.netClient.on('close', close);
+
+		//self.netClient.connect();
+
+		self.netClient.write = function(buffer){
+			self.netClient.send( buffer, 0, buffer.length, cParam.port, cParam.host, function (err) {
+				if (err) {
+					self.emit('error');//??
+				} 
+			});
+		}
+
+
+		//{
+		outputLog('UDP Connection Setup to ' + cParam.host + ' on port ' + cParam.port, "DEBUG", self.connectionID);
+
+		// Track the connection state
+		self.connectionState = 4;  // 4 = all connected, simple with MC protocol.  Other protocols have a negotiation/session packet as well.
+
+		self.netClient.removeAllListeners('data');
+		self.netClient.removeAllListeners('message');
+		self.netClient.removeAllListeners('error');
+
+		self.netClient.on('message', function () {
+			self.onResponse.apply(self, arguments);
+		});  // We need to make sure we don't add this event every time if we call it on data.  
+		self.netClient.on('error', function () {
+			self.readWriteError.apply(self, arguments);
+		});  // Might want to remove the connecterror listener
+		
+		self.emit('open');
+		if ((!self.connectCBIssued) && (typeof (self.connectCallback) === "function")) {
+			self.connectCBIssued = true;
+			self.connectCallback();
+		}
+		//}
+
+		self.connectionState = 4;
+
+	} else {
+		// Don't re-trigger.
+		if (self.connectionState >= 1) { return; }
+		self.connectionCleanup();
+		self.netClient = net.connect(cParam, function () {
+			self.netClient.setKeepAlive(true, 2500); // For reliable unplug detection in most cases - although it takes 10 minutes to notify
+			self.onTCPConnect.apply(self, arguments);
+		});
+
+		self.connectionState = 1;  // 1 = trying to connect
+
+		self.netClient.on('error', function () {
+			self.connectError.apply(self, arguments);
+		});
+
+		self.netClient.on('close', function () {
+			self.onClientDisconnect.apply(self, arguments);
+		});
+
+
+		outputLog('<initiating a new connection>', "INFO", self.connectionID);
+		outputLog('Attempting to connect to host...', "DEBUG", self.connectionID);
+	}
+
 	
-	self.isoclient.on('close', function () {
-		self.onClientDisconnect.apply(self, arguments);
-	});
-
-
-	outputLog('<initiating a new connection>', "INFO", self.connectionID);
-	outputLog('Attempting to connect to host...', "DEBUG", self.connectionID);
 }
 
 MCProtocol.prototype.connectError = function (e) {
@@ -351,14 +441,14 @@ MCProtocol.prototype.connectError = function (e) {
 		self.connectCBIssued = true;
 		self.connectCallback(e);
 	}
-	self.isoConnectionState = 0;
+	self.connectionState = 0;
 }
 
 MCProtocol.prototype.readWriteError = function (e) {
 	var self = this;
 	outputLog('We Caught a read/write error ' + e.code + ' - resetting connection', "ERROR", self.connectionID);
 	self.emit('error', e);
-	self.isoConnectionState = 0;
+	self.connectionState = 0;
 	self.connectionReset();
 }
 
@@ -380,18 +470,46 @@ MCProtocol.prototype.packetTimeout = function (packetType, packetSeqNum) {
 
 MCProtocol.prototype.onTCPConnect = function () {
 	var self = this;
-	outputLog('TCP Connection Established to ' + self.isoclient.remoteAddress + ' on port ' + self.isoclient.remotePort, "DEBUG", self.connectionID);
+	outputLog('TCP Connection Established to ' + self.netClient.remoteAddress + ' on port ' + self.netClient.remotePort, "DEBUG", self.connectionID);
 
 	// Track the connection state
-	self.isoConnectionState = 4;  // 4 = all connected, simple with MC protocol.  Other protocols have a negotiation/session packet as well.
+	self.connectionState = 4;  // 4 = all connected, simple with MC protocol.  Other protocols have a negotiation/session packet as well.
 
-	self.isoclient.removeAllListeners('data');
-	self.isoclient.removeAllListeners('error');
+	self.netClient.removeAllListeners('data');
+	self.netClient.removeAllListeners('message');
+	self.netClient.removeAllListeners('error');
 
-	self.isoclient.on('data', function () {
+	self.netClient.on('data', function () {
 		self.onResponse.apply(self, arguments);
 	});  // We need to make sure we don't add this event every time if we call it on data.  
-	self.isoclient.on('error', function () {
+	self.netClient.on('error', function () {
+		self.readWriteError.apply(self, arguments);
+	});  // Might want to remove the connecterror listener
+	
+	self.emit('open');
+	if ((!self.connectCBIssued) && (typeof (self.connectCallback) === "function")) {
+		self.connectCBIssued = true;
+		self.connectCallback();
+	}
+	return;
+}
+
+
+MCProtocol.prototype.onUDPConnect = function () {
+	var self = this;
+	outputLog('UDP Connection Established to ' + self.netClient.remoteAddress + ' on port ' + self.netClient.remotePort, "DEBUG", self.connectionID);
+
+	// Track the connection state
+	self.connectionState = 4;  // 4 = all connected, simple with MC protocol.  Other protocols have a negotiation/session packet as well.
+
+	self.netClient.removeAllListeners('data');
+	self.netClient.removeAllListeners('message');
+	self.netClient.removeAllListeners('error');
+
+	self.netClient.on('message', function () {
+		self.onResponse.apply(self, arguments);
+	});  // We need to make sure we don't add this event every time if we call it on data.  
+	self.netClient.on('error', function () {
 		self.readWriteError.apply(self, arguments);
 	});  // Might want to remove the connecterror listener
 	
@@ -452,7 +570,7 @@ function _writeItems(self, arg, value, cb, queuedItem) {
 	let plcitems = [];
 	for (i = 0; i < argArr.length; i++) {
 		if (typeof argArr[i] === "string") {
-			let plcitem = new PLCItem();
+			let plcitem = new PLCItem(self);
 			plcitem.init(self.translationCB(argArr[i]), argArr[i], self.octalInputOutput, self.frame, self.plcType, valueArr[i]);
 			plcitem._instance = "original";
 			if (Array.isArray(cb))
@@ -534,7 +652,7 @@ function _writeItems(self, arg, value, cb, queuedItem) {
 MCProtocol.prototype.findItem = function (useraddr) {
 	var self = this;
 	var i;
-	var commstate = { value: self.isoConnectionState !== 4, quality: 'OK' };
+	var commstate = { value: self.connectionState !== 4, quality: 'OK' };
 	if (useraddr === '_COMMERR') { return commstate; }
 	for (i = 0; i < self.polledReadBlockList.length; i++) {
 		if (self.polledReadBlockList[i].useraddr === useraddr) { return self.polledReadBlockList[i]; }
@@ -556,7 +674,7 @@ MCProtocol.prototype.addItemsNow = function (arg, action, cb) {
 	var expectedCount = Array.isArray(arg) ? arg.length : 1;
 	if (typeof arg === "string" && arg !== "_COMMERR") {
 		//plcitem = stringToMCAddr(self.translationCB(arg), arg, self.octalInputOutput, self.frame, self.plcType);
-		let plcitem = new PLCItem();
+		let plcitem = new PLCItem(self);
 		plcitem.init(self.translationCB(arg), arg, self.octalInputOutput, self.frame, self.plcType, undefined /*not writing*/);
 		if (plcitem.initialised) {
 			plcitem.action = action;
@@ -570,7 +688,7 @@ MCProtocol.prototype.addItemsNow = function (arg, action, cb) {
 		for (i = 0; i < arg.length; i++) {
 			if (typeof arg[i] === "string" && arg[i] !== "_COMMERR") {
 				//plcitem = stringToMCAddr(self.translationCB(arg[i]), arg[i], self.octalInputOutput, self.frame, self.plcType);
-				let plcitem = new PLCItem();
+				let plcitem = new PLCItem(self);
 				plcitem.init(self.translationCB(arg[i]), arg[i], self.octalInputOutput, self.frame, self.plcType, undefined /*not writing*/);
 				if (plcitem.initialised) {
 					if (Array.isArray(cb))
@@ -645,7 +763,7 @@ MCProtocol.prototype.readAllItems = function (arg) {
 		self.readDoneCallback = doNothing;
 	}
 
-	if (self.isoConnectionState !== 4) {
+	if (self.connectionState !== 4) {
 		outputLog("Unable to read when not connected. Return bad values.", "WARN", self.connectionID);
 	} // For better behaviour when auto-reconnecting - don't return now
 
@@ -695,7 +813,7 @@ function _readItems(self, arg, cb, queuedItem) {
 		argArr = [arg];
 	}
 
-	if (self.isoConnectionState !== 4) {
+	if (self.connectionState !== 4) {
 		outputLog("Unable to read when not connected. Return bad values.", "WARN", self.connectionID);
 		//self.queue = [];//empty the queue
 	} // For better behaviour when auto-reconnecting - don't return now
@@ -728,7 +846,7 @@ function _readItems(self, arg, cb, queuedItem) {
 	let plcitems = [];
 	for (i = 0; i < argArr.length; i++) {
 		if (typeof argArr[i] === "string" && argArr[i] !== "_COMMERR") {
-			let plcitem = new PLCItem();
+			let plcitem = new PLCItem(self);
 			plcitem.init(self.translationCB(argArr[i]), argArr[i], self.octalInputOutput, self.frame, self.plcType, undefined /*not writing*/);
 			if (Array.isArray(cb))
 				plcitem.cb = cb[i];
@@ -1252,15 +1370,15 @@ MCProtocol.prototype.sendReadPacket = function (arg) {
 			outputLog(sendBuffer, "DEBUG");
 		}
 
-		if (self.isoConnectionState == 4) {
+		if (self.connectionState == 4) {
 			readPacket.timeout = setTimeout(function () {
 				self.packetTimeout.apply(self, arguments);
 			},
 				self.globalTimeout, "read", readPacket.seqNum);
 			if (self.isAscii) {
-				self.isoclient.write(asciize(sendBuffer));
+				self.netClient.write(asciize(sendBuffer));
 			} else {
-				self.isoclient.write(sendBuffer);  // was 31
+				self.netClient.write(sendBuffer);  // was 31
 			}
 			self.lastPacketSent = readPacket;
 			self.lastPacketSent.isWritePacket = false;
@@ -1273,7 +1391,7 @@ MCProtocol.prototype.sendReadPacket = function (arg) {
 
 			outputLog('Sent Read Packet SEQ ' + readPacket.seqNum, "INFO");
 		} else {
-			//			outputLog('Somehow got into read block without proper isoConnectionState of 4.  Disconnect.');
+			//			outputLog('Somehow got into read block without proper connectionState of 4.  Disconnect.');
 			//			connectionReset();
 			//			setTimeout(connectNow, 2000, connectionParams);
 			// Note we aren't incrementing maxParallel so we are actually going to time out on all our packets all at once.    
@@ -1282,10 +1400,10 @@ MCProtocol.prototype.sendReadPacket = function (arg) {
 			readPacket.timeoutError = true;
 			if (!flagReconnect) {
 				// Prevent duplicates
-				outputLog(`Not Sending Read Packet (seqNum==${readPacket.seqNum}) because we are not connected - connection state is ${self.isoConnectionState}`, 0, self.connectionID);
+				outputLog(`Not Sending Read Packet (seqNum==${readPacket.seqNum}) because we are not connected - connection state is ${self.connectionState}`, 0, self.connectionID);
 			}
 			// This is essentially an instantTimeout.  
-			if (self.isoConnectionState == 0) {
+			if (self.connectionState == 0) {
 				flagReconnect = true;
 			}
 			outputLog('Requesting PacketTimeout Due to connection state != 4.  readPacket SeqNum == ' + readPacket.seqNum, 1, self.connectionID);
@@ -1298,7 +1416,7 @@ MCProtocol.prototype.sendReadPacket = function (arg) {
 	if (flagReconnect) {
 		setTimeout(function () {
 			outputLog("The scheduled reconnect from sendReadPacket is happening now", 1, self.connectionID);
-			self.connectNow(self.connectionParams);  // We used to do this NOW - not NextTick() as we need to mark isoConnectionState as 1 right now.  Otherwise we queue up LOTS of connects and crash.
+			self.connectNow(self.connectionParams);  // We used to do this NOW - not NextTick() as we need to mark connectionState as 1 right now.  Otherwise we queue up LOTS of connects and crash.
 		}, 0);
 	}
 	return sentCount;
@@ -1337,17 +1455,17 @@ MCProtocol.prototype.sendWritePacket = function () {
 		}
 
 
-		if (self.isoConnectionState === 4) {
+		if (self.connectionState === 4) {
 			writePacket.timeout = setTimeout(function () {
 				self.packetTimeout.apply(self, arguments);
 			}, self.globalTimeout, "write", writePacket.seqNum);
 			outputLog("Actual Send Packet:", 2);
 			outputLog(self.writeReq.slice(0, curLength), 2);
 			if (self.isAscii) {
-				self.isoclient.write(asciize(self.writeReq.slice(0, curLength)));  // was 31
+				self.netClient.write(asciize(self.writeReq.slice(0, curLength)));  // was 31
 				sentCount++;
 			} else {
-				self.isoclient.write(self.writeReq.slice(0, curLength));  // was 31
+				self.netClient.write(self.writeReq.slice(0, curLength));  // was 31
 				sentCount++;
 			}
 			self.lastPacketSent = writePacket;
@@ -1373,7 +1491,7 @@ MCProtocol.prototype.sendWritePacket = function () {
 			process.nextTick(function () {
 				self.packetTimeout("write", scopePlaceholder);
 			});
-			if (self.isoConnectionState == 0) {
+			if (self.connectionState == 0) {
 				flagReconnect = true;
 			}
 		}
@@ -1381,7 +1499,7 @@ MCProtocol.prototype.sendWritePacket = function () {
 	if (flagReconnect) {
 		setTimeout(function () {
 			outputLog("The scheduled reconnect from sendWritePacket is happening now", "DEBUG", self.connectionID);
-			self.connectNow(self.connectionParams);  // We used to do this NOW - not NextTick() as we need to mark isoConnectionState as 1 right now.  Otherwise we queue up LOTS of connects and crash.
+			self.connectNow(self.connectionParams);  // We used to do this NOW - not NextTick() as we need to mark connectionState as 1 right now.  Otherwise we queue up LOTS of connects and crash.
 		}, 0);
 	}
 	return sentCount;
@@ -1395,7 +1513,7 @@ MCProtocol.prototype.isOptimizableArea = function (area) {
 	return true;
 }
 
-MCProtocol.prototype.onResponse = function (rawdata) {
+MCProtocol.prototype.onResponse = function (rawdata, rinfo) {
 	var self = this;
 	var isReadResponse, isWriteResponse, data;
 	// Packet Validity Check.  
@@ -1704,7 +1822,7 @@ MCProtocol.prototype.onClientDisconnect = function (err) {
 
 MCProtocol.prototype.connectionReset = function () {
 	var self = this;
-	self.isoConnectionState = 0;
+	self.connectionState = 0;
 	self.resetPending = true;
 	outputLog('ConnectionReset is happening', "DEBUG");
 	// The problem is that if we are interrupted before a read can be completed, say we get a bogus packet - we'll never recover.
@@ -1718,9 +1836,14 @@ MCProtocol.prototype.connectionReset = function () {
 
 MCProtocol.prototype.resetNow = function () {
 	var self = this;
-	self.isoConnectionState = 0;
-	self.isoclient.end();
+	self.connectionState = 0;
 	outputLog('resetNow is happening', "INFO");
+	if(self.connectionParams.protocol == "UDP"){
+		self.netClient.close();
+	} else {
+		self.netClient.end();
+	}
+
 	self.resetPending = false;
 	// In some cases, we can have a timeout scheduled for a reset, but we don't want to call it again in that case.
 	// We only want to call a reset just as we are returning values.  Otherwise, we will get asked to read // more values and we will "break our promise" to always return something when asked. 
@@ -1733,13 +1856,15 @@ MCProtocol.prototype.resetNow = function () {
 
 MCProtocol.prototype.connectionCleanup = function () {
 	var self = this;
-	self.isoConnectionState = 0;
+	self.connectionState = 0;
 	outputLog('Connection cleanup is happening', "INFO");
-	if (typeof (self.isoclient) !== "undefined") {
-		self.isoclient.removeAllListeners('data');
-		self.isoclient.removeAllListeners('error');
-		self.isoclient.removeAllListeners('connect');
-		self.isoclient.removeAllListeners('end');
+	if (typeof (self.netClient) !== "undefined") {
+		self.netClient.removeAllListeners('message');
+		self.netClient.removeAllListeners('data');
+		self.netClient.removeAllListeners('error');
+		self.netClient.removeAllListeners('connect');
+		self.netClient.removeAllListeners('end');
+		self.netClient.removeAllListeners();
 	}
 	clearTimeout(self.connectTimeout);
 	clearTimeout(self.PDUTimeout);
@@ -2422,7 +2547,7 @@ Buffer.prototype.addUint32LE = function (v) {
 	this.pointer += 4;
 }
 
-//PG 464
+//https://dl.mitsubishielectric.com/dl/fa/document/manual/plc/sh080008/sh080008x.pdf PG 464
 MCProtocol.prototype.enumMaxWordLength = _enum({
 	batchReadWordUnits04010000: { //Batch read in word units (command: 0401) PG86
 		description: "Batch read in word units",
@@ -2506,7 +2631,7 @@ MCProtocol.prototype.enumOPCQuality = _enum({
 	unknown: { name: 'unknown', desc: 'Unknown', value: 0xff }, //(255)Unknown	
 });
 
-//PG 68
+//https://dl.mitsubishielectric.com/dl/fa/document/manual/plc/sh080008/sh080008x.pdf PG 68
 MCProtocol.prototype.enumDeviceCodeSpecQ = _enum({
 	SM: {symbol: 'SM', type: 'BIT', notation: 'Decimal', binary: 0x91, ascii: 'SM', description: 'Special relay'},
 	SD: {symbol: 'SD', type: 'WORD', notation: 'Decimal', binary: 0xA9, ascii: 'SD', description: 'Special register'},
@@ -2599,7 +2724,7 @@ MCProtocol.prototype.enumDeviceCodeSpec1E = _enum({
 	});
 	
 MCProtocol.prototype.enumDeviceCodeSpecL = MCProtocol.prototype.enumDeviceCodeSpecQ;
-MCProtocol.prototype.enumDeviceCodeSpec = MCProtocol.prototype.enumDeviceCodeSpecQ;//default to Q/L series
+//MCProtocol.prototype.enumDeviceCodeSpec = MCProtocol.prototype.enumDeviceCodeSpecQ;//default to Q/L series
 
 MCProtocol.prototype.enumDataTypes = _enum({
 	REAL: { name: "REAL", dataLength: 4, badValue: 0.0 },
@@ -2669,8 +2794,8 @@ function PLCWriteResult(TAG, addr, quality, timeTaken) {
 	this.timeStamp = Date.now();
 }
 
-function PLCItem() { // Object
-
+function PLCItem(owner) { // Object
+	this.owner = owner;
 	this.initialised = false;
 
 	// MC only
@@ -2837,6 +2962,31 @@ function PLCItem() { // Object
 		return plcitem.deviceCodeSpec.type == 'BIT';
 	}
 
+	this.getDeviceCodeSpec = function(){
+		var theItem = this;
+		
+		if(theItem.owner && theItem.owner.enumDeviceCodeSpec){
+			return theItem.owner.enumDeviceCodeSpec;
+		}
+		
+		if(theItem.enumDeviceCodeSpec){
+			return theItem.enumDeviceCodeSpec;
+		}
+
+		if (typeof (theItem.plcType) === 'undefined') {
+			theItem.enumDeviceCodeSpec = MCProtocol.prototype.enumDeviceCodeSpecQ;//default to Q/L series
+		} else {			
+			theItem.enumDeviceCodeSpec = MCProtocol.prototype['enumDeviceCodeSpec' + self.plcType];
+		}
+		
+		if (typeof (theItem.frame) === 'undefined') {
+			//
+		} else if(theItem.frame.toUpperCase() == '1E'){
+			theItem.enumDeviceCodeSpec = MCProtocol.prototype.enumDeviceCodeSpec1E;
+		}
+		return theItem.enumDeviceCodeSpec;
+	}
+
 	this.init = function _stringToMCAddr(addr, TAG, octalInputOutput, frame, plcType, writeValue) {
 		"use strict";
 		var theItem = this;
@@ -2878,7 +3028,9 @@ function PLCItem() { // Object
 		try {
 			addr = addr.toUpperCase();
 			var allowedDigitSpecs = "K2|K4|K8";
-			var allowedDeviceTypes = MCProtocol.prototype.enumDeviceCodeSpec.keys.join("|");
+			//var allowedDeviceTypes = MCProtocol.prototype.enumDeviceCodeSpec.keys.join("|");
+			var deviceCodeSpec = this.getDeviceCodeSpec();
+			var allowedDeviceTypes = deviceCodeSpec.keys.join("|");
 			var allowedDataTypes = MCProtocol.prototype.enumDataTypes.keys.join("|");
 			var AltAddressStyle = false; //Alt style combines DS and DT at position [1] e.g. [DS/DT] DEV DA [.BIT] [,CNT]
 			var strRegex = undefined;
@@ -2928,7 +3080,8 @@ function PLCItem() { // Object
 
 			//get device number (if X / Y, then convert HEX to DEC)
 			let devNo = spec.deviceNo, radix = 10;
-			theItem.deviceCodeSpec = MCProtocol.prototype.enumDeviceCodeSpec[theItem.deviceCode];
+			//theItem.deviceCodeSpec = MCProtocol.prototype.enumDeviceCodeSpec[theItem.deviceCode];
+			theItem.deviceCodeSpec = deviceCodeSpec[theItem.deviceCode];
 			switch (theItem.deviceCodeSpec.notation) {
 				case 'Decimal':
 					radix = 10;
@@ -3671,7 +3824,7 @@ function PLCItem() { // Object
 
 	// And functions...
 	this.clone = function () {
-		var newObj = new PLCItem();
+		var newObj = new PLCItem(this.owner);
 		for (var i in this) {
 			if (i == 'clone') 
 				continue;

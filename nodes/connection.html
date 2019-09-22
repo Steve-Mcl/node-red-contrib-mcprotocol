@@ -20,6 +20,13 @@
     </select>
   </div>
   <div class="form-row">
+    <label for="node-config-input-protocol"><i class="icon-tag"></i> <span data-i18n="mcprotocol-read.label.protocol">protocol</span></label>
+    <select id="node-config-input-protocol">
+      <option value="TCP">TCP</option>
+      <option value="UDP">UDP</option>
+    </select>
+  </div>
+  <div class="form-row">
     <label for="node-config-input-plcType"><i class="icon-tag"></i> <span data-i18n="mcprotocol-read.label.plcType">PLC Type</span></label>
     <select id="node-config-input-plcType">
       <option value="A">A</option>
@@ -75,7 +82,8 @@
     defaults: {
       name: { value: "" },
       host: { value: "192.168.0.1", required: true },
-      port: { value: 9600, required: true, validate: RED.validators.number() },
+      port: { value: 5001, required: true, validate: RED.validators.number() },
+      protocol: { value: "TCP"},
       frame: { value: "3E"},
       plcType: { value: "Q"},
       ascii: { value: false},
@@ -100,8 +108,8 @@
   <p></p>
   <h4>NOTES</h4>
   <ul>
-    <li>Only TCP connection method is supported</li>
     <li>ASCII mode is currently not supported for frames 3E and 4E</li>
+    <li>For A series PLC, only 1E frames are supported</li>
   </ul>
 
 </script>

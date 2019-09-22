@@ -20,6 +20,7 @@ module.exports = function (RED) {
     this.host = config.host;
     this.port = config.port;
     this.options = {};
+    this.options.protocol = config.protocol ? config.protocol : "TCP";
     this.options.plcType = config.plcType ? config.plcType : "Q";
     this.options.frame = config.frame ? config.frame : "3E";
     this.options.ascii = config.ascii ? config.ascii : false;

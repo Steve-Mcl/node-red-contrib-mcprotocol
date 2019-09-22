@@ -40,6 +40,7 @@ module.exports = {
         var options = opts || {};
         options.host = host;
         options.port = port;
+        options.protocol = options.protocol || "TCP";
         options.ascii = options.ascii || false;
         options.frame = options.frame || "3E";
         options.plcType = options.plcType || "Q";
@@ -50,7 +51,8 @@ module.exports = {
 
         var mcp = new mcprotocol();
         
-        mcp.setDebugLevel("WARN");//
+        //mcp.setDebugLevel("WARN");
+        mcp.setDebugLevel("TRACE");//
         mcp.initiateConnection(options);
         var connecting = false;
         var obj = {
