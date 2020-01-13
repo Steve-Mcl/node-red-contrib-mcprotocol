@@ -47,7 +47,7 @@ module.exports = function(RED) {
 
         if (msg.timeout) {
           node.status({ fill: "red", shape: "ring", text: "timeout" });
-          node.error("timeout");
+          node.error("timeout", msg);
           var dbgmsg = {
             f: "myReply(msg)",
             msg: msg,
@@ -96,7 +96,7 @@ module.exports = function(RED) {
           msg,
           (err, value) => {
             if (err) {
-              node.error("Unable to evaluate address");
+              node.error("Unable to evaluate address", msg);
               node.status({
                 fill: "red",
                 shape: "ring",
@@ -106,7 +106,7 @@ module.exports = function(RED) {
             } else {
               addr = value;
               if (addr == "") {
-                node.error("address is empty");
+                node.error("address is empty", msg);
                 node.status({
                   fill: "red",
                   shape: "ring",
@@ -145,7 +145,7 @@ module.exports = function(RED) {
             msg,
             (err, value) => {
               if (err) {
-                node.error("Unable to evaluate data");
+                node.error("Unable to evaluate data", msg);
                 node.status({
                   fill: "red",
                   shape: "ring",
@@ -165,7 +165,7 @@ module.exports = function(RED) {
         }
 
         if (!data) {
-          node.error("Data is empty");
+          node.error("Data is empty", msg);
           return;
         }
 
@@ -187,7 +187,7 @@ module.exports = function(RED) {
             this.busyMonitor = setTimeout(function() {
               if (node.busy) {
                 node.status({ fill: "red", shape: "ring", text: "timeout" });
-                node.error("timeout");
+                node.error("timeout", msg || node.msgMem || {});
                 node.busy = false;
                 return;
               }
@@ -201,7 +201,7 @@ module.exports = function(RED) {
           this.connection.write(addr, data, myReply);
         } catch (error) {
           node.busy = false;
-          node.error(error);
+          node.error(error, msg || node.msgMem || {});
           node.status({ fill: "red", shape: "ring", text: "error" });
           var dbgmsg = {
             info:
@@ -211,6 +211,7 @@ module.exports = function(RED) {
             data: data,
             error: error
           };
+          node.debug(dbgmsg);
           return;
         }
       });
