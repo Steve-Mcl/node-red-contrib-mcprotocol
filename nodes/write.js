@@ -16,7 +16,7 @@ module.exports = function(RED) {
     this.dataType = config.dataType || "num";
     this.errorHandling = config.errorHandling;
     this.outputs = config.errorHandling === "output2" ? 2 : 1;//1 output pins if throw or msg.error, 2 outputs if errors to go to seperate output pin
-
+    this.logLevel = RED.settings.logging.console.level;
     this.connectionConfig = RED.nodes.getNode(this.connection);
     var context = this.context();
     var node = this;
@@ -26,6 +26,7 @@ module.exports = function(RED) {
     if (this.connectionConfig) {
       node.status({ fill: "yellow", shape: "ring", text: "initialising" });
       var options = Object.assign({}, node.connectionConfig.options);
+      options.logLevel = this.logLevel;
       this.connection = connection_pool.get(
         this.connectionConfig.port,
         this.connectionConfig.host,

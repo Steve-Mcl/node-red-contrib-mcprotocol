@@ -115,6 +115,9 @@ MCProtocol.prototype.setDebugLevel = function (level) {
 		case 'ERROR':
 			effectiveDebugLevel = 0;
 			break;
+		case 'NONE':
+			effectiveDebugLevel = -1;
+			break;
 	
 		default:
 			effectiveDebugLevel = level;
@@ -1873,6 +1876,9 @@ MCProtocol.prototype.connectionCleanup = function () {
 }
 
 function outputLog(txt, debugLevel, id) {
+	if(effectiveDebugLevel < 0){
+		return;//NONE
+	}
 	var idtext;
 	if (typeof (id) === 'undefined') {
 		idtext = '';
@@ -1881,28 +1887,36 @@ function outputLog(txt, debugLevel, id) {
 	}
 	var t = process.hrtime();
 	var s = new Date().toISOString() + " " + Math.round(t[1] / 1000) + " ";
-
-	let level = 0;//error
-	switch (debugLevel) {
-		case "TRACE":
-			level = 3;
-			break;
-		case "DEBUG":
-		case "INFO":
-			level = 2;
-			break;
-		case "WARN":
-			level = 1;
-			break;
-		case "ERROR":
-			level = 0;
-			break;
-		case "NONE":
-			level = -1;
-			break;
+	
+	let level = 3;//debug by default
+	if(typeof debugLevel == "number"){
+		level = debugLevel;
+	} else {
+		if(!debugLevel){
+			debugLevel = "DEBUG";
+		}
+		switch (debugLevel) {
+			case "TRACE":
+				level = 4;
+				break;
+			case "DEBUG":
+				level = 3;
+				break;
+			case "INFO":
+				level = 2;
+				break;
+			case "WARN":
+				level = 1;
+				break;
+			case "ERROR":
+				level = 0;
+				break;
+			case "NONE":
+				level = 65535;
+				break;
+		}
 	}
-
-	if (effectiveDebugLevel >= level) { console.log('[' + s + idtext + '] ' + util.format(txt)); }
+	if (  effectiveDebugLevel >= level) { console.log('[' + s + idtext + '] ' + util.format(txt)); }
 }
 
 function doneSending(element) {

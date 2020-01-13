@@ -21,12 +21,12 @@ module.exports = {
         options.autoConnect =
           options.autoConnect == "undefined" ? true : options.autoConnect;
         options.preventAutoReconnect = false;
-
+        options.logLevel = options.logLevel || "WARN";
         util.log(`[mcprotocol] adding new connection to pool ~ ${id}`);
 
         var mcp = new mcprotocol();
 
-        mcp.setDebugLevel("WARN");
+        mcp.setDebugLevel(options.logLevel);
         mcp.initiateConnection(options);
         var connecting = false;
         var obj = {
