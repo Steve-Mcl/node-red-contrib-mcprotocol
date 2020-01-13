@@ -32,6 +32,8 @@
       addressType: { value: "str" },
       data: { value: "", validate: RED.validators.typedInput("dataType") },
       dataType: { value: "str" },
+      errorHandling: { value: 0 },
+      outputs: { value: 1 }
     },
     inputs: 1,
     outputs: 1,
@@ -69,13 +71,19 @@
     <input type="hidden" id="node-input-addressType">
     <input style="width: 70%" type="text" id="node-input-address" placeholder="D0">
   </div>
-
   <div class="form-row">
     <label for="node-input-data"><i class="fa fa-table"></i> <span data-i18n="write.label.data"> Data</span></label>
     <input type="hidden" id="node-input-dataType">
     <input style="width: 70%" type="text" id="node-input-data" >
   </div>
- 
+  <div class="form-row">
+    <label for="node-input-errorHandling"><i class="fa fa-exclamation"></i><span data-i18n="ab-df1-read.label.errors"> Errors</span></label>
+    <select style="width: 70%" id="node-input-errorHandling">
+      <option value="throw">Throw (default)</option>
+      <option value="msg">Output to msg.error</option>
+      <option value="output2">Send to seperate output</option>
+    </select>
+  </div> 
 </script>
 
 <script type="text/html" data-help-name="MC Write">
@@ -86,7 +94,7 @@
     <dd>The PLC connection</dd>
     <dt class="required">Address<span class="property-type">number | string | payload</span></dt>
     <dd>PLC Memory Address</dd>
-    <dt class="required">Data<span class="property-type">Array<number> | number | string | payload </span></dt>
+    <dt class="required">Data<span class="property-type">Array&lt;number&gt; | number | string | payload </span></dt>
     <dd>Data to be written to PLC starting at specified address.</dd>
     <p><i>INFO: To open / close the MC Protocol connection, send boolean <code>true</code> in <code>msg.connect</code> or <code>msg.disconnect</code>.  Alternatively, send string <code>connect</code> or <code>disconnect</code> in <code>msg.topic</code> to the any mc read / mc write node.</i></p>
   </dl>

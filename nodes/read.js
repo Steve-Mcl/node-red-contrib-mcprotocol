@@ -9,6 +9,8 @@ module.exports = function(RED) {
     this.address = config.address || ""; //address
     this.addressType = config.addressType || "str";
     this.outputFormat = config.outputFormat || 0;
+    this.errorHandling = config.errorHandling;
+    this.outputs = config.errorHandling === 2 ? 2 : 1;//1 output pins if throw or msg.error, 2 outputs if errors to go to seperate output pin
 
     this.connectionConfig = RED.nodes.getNode(this.connection);
     var context = this.context();
@@ -38,7 +40,29 @@ module.exports = function(RED) {
         node.status({ fill: "red", shape: "dot", text: "not connected" });
         node.busy = false;
       });
-
+      function handleError(err, msg, node, config){
+        if(!config) config = {};
+        if(typeof config === "string"){
+          config = {
+            errorHandling: config
+          }
+        }
+        switch (config.errorHandling) {
+          case "throw":
+            node.error(err,msg);
+            break;
+          case "msg":
+            msg.error = err;
+            break;
+          case "output2":
+            node.send([null,{payload: err}]);//send error on 2nd pin
+            break;
+                
+          default:
+            node.error(err,msg);
+            break;
+        }
+      }
       function myReply(problem, msg) {
         clearTimeout(node.busyMonitor);
         if (!node.busy) {
@@ -54,7 +78,8 @@ module.exports = function(RED) {
 
         if (msg.timeout) {
           node.status({ fill: "red", shape: "ring", text: "timeout" });
-          node.error("timeout", msg);
+          handleError("timeout", msg, config);
+          //node.error("timeout", msg);
           var dbgmsg = {
             f: "myReply(msg)",
             msg: msg,
@@ -167,7 +192,8 @@ module.exports = function(RED) {
           msg,
           (err, value) => {
             if (err) {
-              node.error("Unable to evaluate address", msg);
+              handleError("Unable to evaluate address", msg, node, node.errorHandling);
+              //node.error("Unable to evaluate address", msg);
               node.status({
                 fill: "red",
                 shape: "ring",
@@ -181,7 +207,8 @@ module.exports = function(RED) {
         );
 
         if (addr == "") {
-          node.error("address is empty", msg);
+          handleError("address is empty", msg, node, node.errorHandling);
+          //node.error("address is empty", msg);
           node.status({ fill: "red", shape: "ring", text: "error" });
           return;
         }
@@ -200,7 +227,8 @@ module.exports = function(RED) {
             node.busyMonitor = setTimeout(function() {
               if (node.busy) {
                 node.status({ fill: "red", shape: "ring", text: "timeout" });
-                node.error("timeout", msg || node.msgMem || {});
+                handleError("timeout", msg, node, node.errorHandling);
+                //node.error("timeout", msg || node.msgMem || {});
                 node.busy = false;
                 return;
               }
@@ -209,7 +237,8 @@ module.exports = function(RED) {
           this.connection.read(addr, myReply);
         } catch (error) {
           node.busy = false;
-          node.error(error, msg || node.msgMem || {});
+          handleError(error, msg, node, node.errorHandling);
+          //node.error(error, msg || node.msgMem || {});
           node.status({ fill: "red", shape: "ring", text: "error" });
           var dbgmsg = {
             info: "read.js-->on 'input'",
