@@ -31,7 +31,7 @@
       address: { value: "", validate: RED.validators.typedInput("addressType") },
       addressType: { value: "str" },
       outputFormat: { value: 0 },
-      errorHandling: { value: 0 },
+      errorHandling: { value: "throw" },
       outputs: { value: 1 }
     },
     inputs: 1,
@@ -46,7 +46,12 @@
     oneditprepare: function () {
       var sti = setupTypedInput.bind(this);
       sti('address', ['msg', 'flow', 'global', 'str', 'env'], 'str');//addr
-    }
+    }, 
+    oneditsave: function () {
+      debugger
+      var errH = $("#node-input-errorHandling").val();
+      this.outputs = errH === "output2" ? 2 : 1;//1 output pins if throw or msg.error, 2 outputs if errors to go to seperate output pin
+    } 
 
   });
 </script>
