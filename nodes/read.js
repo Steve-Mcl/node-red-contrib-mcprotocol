@@ -216,7 +216,6 @@ module.exports = function(RED) {
             connection: `host: ${node.connectionConfig.host}, port: ${node.connectionConfig.port}`,
             address: addr
           };
-          console.debug(dbgmsg);
           return;
         }
       });

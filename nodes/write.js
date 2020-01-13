@@ -211,7 +211,6 @@ module.exports = function(RED) {
             data: data,
             error: error
           };
-          console.debug(dbgmsg);
           return;
         }
       });
