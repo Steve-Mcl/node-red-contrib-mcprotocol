@@ -45,7 +45,6 @@
       return this.name || "MC Write";
     },
     oneditprepare: function () {
-      debugger;
       var sti = setupTypedInput.bind(this);
       sti('address', ['msg', 'flow', 'global', 'str', 'env'], 'str');//addr
       sti('data', ['msg', 'flow', 'global','num','str', {
@@ -55,7 +54,6 @@
       },], 'num');
     }, 
     oneditsave: function () {
-      debugger
       var errH = $("#node-input-errorHandling").val();
       this.outputs = errH === "output2" ? 2 : 1;//1 output pins if throw or msg.error, 2 outputs if errors to go to seperate output pin
     }
