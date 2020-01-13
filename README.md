@@ -15,9 +15,6 @@ This is a Node-RED node module to directly interface with MITSUBISHI PLCs over m
   - R
 - ASCII and BINARY mode *(See Note 2)*
 
-Credits to [plcpeople](https://github.com/plcpeople/mcprotocol) for his implementation of mcprotocol
-Credits to [Jozo132](https://github.com/Jozo132/node-omron-read.git) for his original implementation node-omron-read on which this is based
-
 ### Prerequisites for Windows
 
 * git	(Used for repository cloning/downloads)
@@ -37,3 +34,8 @@ npm install c:/tempsourcefolder/node-red-contrib-mcprotocol
 ### NOTES
 1. For A series PLC, only 1E frames are supported
 2. ASCII mode is currently not supported for frames 3E and 4E
+
+
+#### Credits
+* [plcpeople](https://github.com/plcpeople/mcprotocol) for his implementation of mcprotocol
+* [Jozo132](https://github.com/Jozo132/node-omron-read.git) for his original implementation node-omron-read on which this contrib node was first based
