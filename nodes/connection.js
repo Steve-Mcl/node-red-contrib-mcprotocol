@@ -1,18 +1,5 @@
-// var constants = require('../constants');
 
-// function isInt(x,def){
-//   var v;
-//   try{
-//     v = parseInt(x);
-//     if(isNaN(v))
-//       return def;
-//   } catch(e){
-//     return def;
-//   }
-//   return v;
-// }
-
-module.exports = function (RED) {
+module.exports = function(RED) {
   function mcConnection(config) {
     RED.nodes.createNode(this, config);
 
@@ -28,10 +15,9 @@ module.exports = function (RED) {
     this.options.PCStation = config.PCStation ? config.PCStation : 0xff;
     this.options.PLCModuleNo = config.PLCModuleNo ? config.PLCModuleNo : 0x3ff;
     this.options.network = config.network ? config.network : 0;
-    this.options.octalInputOutput = config.octalInputOutput ? config.octalInputOutput : false;
-    
-
+    this.options.octalInputOutput = config.octalInputOutput
+      ? config.octalInputOutput
+      : false;
   }
   RED.nodes.registerType("MC Protocol Connection", mcConnection);
 };
-
