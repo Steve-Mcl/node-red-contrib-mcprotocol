@@ -51,8 +51,7 @@ module.exports = {
 
         var mcp = new mcprotocol();
         
-        //mcp.setDebugLevel("WARN");
-        mcp.setDebugLevel("TRACE");//
+        mcp.setDebugLevel("WARN");
         mcp.initiateConnection(options);
         var connecting = false;
         var obj = {
