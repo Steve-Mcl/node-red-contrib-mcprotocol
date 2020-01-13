@@ -119,25 +119,25 @@ module.exports = function(RED) {
         );
 
         //data - data
-        console.log("node.data...");
-        console.log(node.data);
+        node.trace("node.data...");
+        node.trace(node.data);
 
         // var csv2arr = function (str) {
         //   return node.data.split(',').map(Number);
         // }
         if (node.dataType == "str") {
-          console.log("mcwrite input:node.dataType == 'str'");
+          node.trace("mcwrite input:node.dataType == 'str'");
           data = node.data;
         } else if (node.dataType == "num") {
-          console.log("mcwrite input:node.dataType == 'num'");
+          node.trace("mcwrite input:node.dataType == 'num'");
           //data = [node.data];
           data = node.data;
         } else if (node.dataType == "csv") {
-          console.log("mcwrite input:node.dataType == 'csv'");
+          node.trace("mcwrite input:node.dataType == 'csv'");
           //data = csv2arr(node.data);
           data = node.data;
         } else {
-          console.log("mcwrite input:evaluateNodeProperty");
+          node.trace("mcwrite input:evaluateNodeProperty");
           RED.util.evaluateNodeProperty(
             node.data,
             node.dataType,
@@ -194,9 +194,9 @@ module.exports = function(RED) {
             }, node.busyTimeMax);
           }
 
-          console.log("mcwrite input:  addr,  data...");
-          console.log(addr);
-          console.log(data);
+          node.trace("mcwrite input:  addr,  data...");
+          node.trace(addr);
+          node.trace(data);
 
           this.connection.write(addr, data, myReply);
         } catch (error) {
