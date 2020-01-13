@@ -10,7 +10,7 @@ module.exports = function(RED) {
     this.addressType = config.addressType || "str";
     this.outputFormat = config.outputFormat || 0;
     this.errorHandling = config.errorHandling;
-    this.outputs = config.errorHandling === 2 ? 2 : 1;//1 output pins if throw or msg.error, 2 outputs if errors to go to seperate output pin
+    this.outputs = config.errorHandling === "output2" ? 2 : 1;//1 output pins if throw or msg.error, 2 outputs if errors to go to seperate output pin
 
     this.connectionConfig = RED.nodes.getNode(this.connection);
     var context = this.context();
@@ -40,7 +40,10 @@ module.exports = function(RED) {
         node.status({ fill: "red", shape: "dot", text: "not connected" });
         node.busy = false;
       });
-      function handleError(err, msg, node, config){
+      function handleError(err, msg, node, config, dont_send_msg){
+        if(typeof err === "string"){
+          err = new Error(err);
+        }
         if(!config) config = {};
         if(typeof config === "string"){
           config = {
@@ -53,6 +56,7 @@ module.exports = function(RED) {
             break;
           case "msg":
             msg.error = err;
+            if(!dont_send_msg) node.send(msg);//send error on 1st pin
             break;
           case "output2":
             node.send([null,{payload: err}]);//send error on 2nd pin
@@ -75,7 +79,9 @@ module.exports = function(RED) {
         node.msgMem.mcReadDetails.timeout = msg.timeout; //TODO
         node.msgMem.mcReadDetails.error = problem;
         node.msgMem.payload = null;
-
+        if(problem){
+          msg.problem = true;
+        }
         if (msg.timeout) {
           node.status({ fill: "red", shape: "ring", text: "timeout" });
           handleError("timeout", msg, config);
