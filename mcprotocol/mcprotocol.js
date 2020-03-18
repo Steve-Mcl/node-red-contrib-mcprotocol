@@ -1842,7 +1842,7 @@ MCProtocol.prototype.connectionReset = function () {
 MCProtocol.prototype.resetNow = function () {
 	var self = this;
 	outputLog('resetNow is happening', "INFO");
-	if(connectionState == 4){
+	if(self.connectionState == 4){
 		if(self.connectionParams.protocol == "UDP"){
 				self.netClient.close();
 		} else {
