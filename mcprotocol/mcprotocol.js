@@ -348,7 +348,11 @@ MCProtocol.prototype.connectNow = function (cParam, suppressCallback) { // TODO 
 	if (self.connectionParams.protocol == "UDP") {
 		//TODO - implement UDP
 
+		// Track the connection state
+		self.connectionState = 1 // 1 = trying to connect
+
 		if (self.netClient) {
+			self.connectionState = 0
 			self.netClient.removeAllListeners();
 			delete self.netClient;
 		}
@@ -385,8 +389,6 @@ MCProtocol.prototype.connectNow = function (cParam, suppressCallback) { // TODO 
 		//{
 		outputLog('UDP Connection Setup to ' + cParam.host + ' on port ' + cParam.port, "DEBUG", self.connectionID);
 
-		// Track the connection state
-		self.connectionState = 4;  // 4 = all connected, simple with MC protocol.  Other protocols have a negotiation/session packet as well.
 
 		self.netClient.removeAllListeners('data');
 		self.netClient.removeAllListeners('message');
@@ -1825,7 +1827,7 @@ MCProtocol.prototype.onClientDisconnect = function (err) {
 
 MCProtocol.prototype.connectionReset = function () {
 	var self = this;
-	self.connectionState = 0;
+	//self.connectionState = 0;
 	self.resetPending = true;
 	outputLog('ConnectionReset is happening', "DEBUG");
 	// The problem is that if we are interrupted before a read can be completed, say we get a bogus packet - we'll never recover.
@@ -1839,14 +1841,15 @@ MCProtocol.prototype.connectionReset = function () {
 
 MCProtocol.prototype.resetNow = function () {
 	var self = this;
-	self.connectionState = 0;
 	outputLog('resetNow is happening', "INFO");
-	if(self.connectionParams.protocol == "UDP"){
-		self.netClient.close();
-	} else {
-		self.netClient.end();
+	if(connectionState == 4){
+		if(self.connectionParams.protocol == "UDP"){
+				self.netClient.close();
+		} else {
+				self.netClient.end();
+		}
 	}
-
+	self.connectionState = 0;
 	self.resetPending = false;
 	// In some cases, we can have a timeout scheduled for a reset, but we don't want to call it again in that case.
 	// We only want to call a reset just as we are returning values.  Otherwise, we will get asked to read // more values and we will "break our promise" to always return something when asked. 
