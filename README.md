@@ -37,5 +37,5 @@ npm install c:/tempsourcefolder/node-red-contrib-mcprotocol
 
 
 #### Credits
-* [plcpeople](https://github.com/plcpeople/mcprotocol) for his implementation of mcprotocol
-* [Jozo132](https://github.com/Jozo132/node-omron-read.git) for his original implementation node-omron-read on which this contrib node was first based
+* [plcpeople](https://github.com/plcpeople/mcprotocol) for the original implementation of mcprotocol
+* [Jozo132](https://github.com/Jozo132/node-omron-read.git) for the original implementation node-omron-read on which this contrib node was first based
