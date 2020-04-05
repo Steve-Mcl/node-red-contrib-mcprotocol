@@ -63,3 +63,5 @@ typings/
 # VS Code
 .vscode
 
+dev*
+
