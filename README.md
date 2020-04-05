@@ -25,7 +25,7 @@ This is a Node-RED node module to directly interface with MITSUBISHI PLCs over m
 Make a directory for the base files on the disk (somewhere secure) and open the created folder and open PowerShell (SHIFT + right_click) or "Git Bash Here" with right mouse inside the folder. Now enter the following:
 ```sh
 cd c:/tempsourcefolder
-git clone https://...../node-red-contrib-mcprotocol.git
+git clone https://github.com/Steve-Mcl/node-red-contrib-mcprotocol.git
 
 cd ~/.node-red
 npm install c:/tempsourcefolder/node-red-contrib-mcprotocol
