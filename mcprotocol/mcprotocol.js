@@ -203,7 +203,7 @@ MCProtocol.prototype.initiateConnection = function (cParam, callback) {
 				break;
 		}
 		self.frame = cParam.frame;
-		outputLog(`'frame' set is ${self.frame}`,"INFO");
+		outputLog(`'frame' set is ${self.frame}`,"DEBUG");
 	}
 
 	if(!self.enumDeviceCodeSpec){
@@ -774,7 +774,7 @@ MCProtocol.prototype.readAllItems = function (arg) {
 
 	// Check if ALL are done...  You might think we could look at parallel jobs, and for the most part we can, but if one just finished and we end up here before starting another, it's bad.
 	if (self.isWaiting()) {
-		outputLog("Waiting to read for all R/W operations to complete.  Will re-trigger readAllItems in 100ms.", "INFO");
+		outputLog("Waiting to read for all R/W operations to complete.  Will re-trigger readAllItems in 100ms.", "DEBUG");
 		setTimeout(function () {
 			self.readAllItems.apply(self, arguments);
 		}, 100, arg);
@@ -783,7 +783,7 @@ MCProtocol.prototype.readAllItems = function (arg) {
 
 	// Now we check the array of adding and removing things.  Only now is it really safe to do this.  
 	self.addRemoveArray.forEach(function (element) {
-		outputLog('Adding or Removing ' + util.format(element), "INFO", self.connectionID);
+		outputLog('Adding or Removing ' + util.format(element), "DEBUG", self.connectionID);
 		if (element.action === 'remove') {
 			self.removeItemsNow(element.arg);
 		}
@@ -829,7 +829,7 @@ function _readItems(self, arg, cb, queuedItem) {
 
 		if (queuedItem) {
 			sendStatus = MCProtocol.prototype.enumSendResult.notSent;
-			outputLog(`️🛢️➡🚧 queued readItem '${arg}' still not sent (isWaiting)`, "INFO")
+			outputLog(`️🛢️➡🚧 queued readItem '${arg}' still not sent (isWaiting)`, "DEBUG")
 
 		} else if (self.queue.length >= self.queueMaxLength) {
 			outputLog(`️🛢️➡🗑️ readItem '${arg}' discarded, queue full`, "WARN")
@@ -842,7 +842,7 @@ function _readItems(self, arg, cb, queuedItem) {
 				fn: "read",
 				dt: Date.now()
 			});
-			outputLog(`️📒➡🛢️ readItem '${arg}' pushed to queue`, "INFO")
+			outputLog(`️📒➡🛢️ readItem '${arg}' pushed to queue`, "DEBUG")
 		}
 		reply.push({ TAG: arg, sendStatus: sendStatus });//[item.useraddr] = MCProtocol.prototype.enumSendResult.badRequest;
 		return reply;
@@ -1363,7 +1363,7 @@ MCProtocol.prototype.sendReadPacket = function (arg) {
 			returnedBfr.copy(self.readReq, curLength);
 			curLength += returnedBfr.length;
 			outputLog(`The buffer.length of read item '${item.useraddr} [offset:${item.offset}] (seqNum:${item.seqNum})' is '${returnedBfr.length}'...`, "DEBUG");
-			outputLog(returnedBfr, 2);
+			outputLog(returnedBfr, "DEBUG");
 		}
 
 		outputLog("The final send buffer is...", "DEBUG");
@@ -1394,7 +1394,7 @@ MCProtocol.prototype.sendReadPacket = function (arg) {
 			readPacket.timeoutError = false;
 			self.parallelJobsNow += 1;
 
-			outputLog('Sent Read Packet SEQ ' + readPacket.seqNum, "INFO");
+			outputLog('Sent Read Packet SEQ ' + readPacket.seqNum, "DEBUG");
 		} else {
 			//			outputLog('Somehow got into read block without proper connectionState of 4.  Disconnect.');
 			//			connectionReset();
@@ -1454,8 +1454,8 @@ MCProtocol.prototype.sendWritePacket = function () {
 			// if(item.useraddr == "D2000,1000"){
 			// 	curLength = curLength;
 			// }
-			outputLog(`The buffer.length of write item '${item.useraddr} [offset:${item.offset}] (seqNum:${item.seqNum})' is '${item.buffer.data.length}'...`, 2);
-			outputLog(item.buffer.data, 2);
+			outputLog(`The buffer.length of write item '${item.useraddr} [offset:${item.offset}] (seqNum:${item.seqNum})' is '${item.buffer.data.length}'...`, "DEBUG");
+			outputLog(item.buffer.data, "DEBUG");
 
 		}
 
@@ -1464,8 +1464,8 @@ MCProtocol.prototype.sendWritePacket = function () {
 			writePacket.timeout = setTimeout(function () {
 				self.packetTimeout.apply(self, arguments);
 			}, self.globalTimeout, "write", writePacket.seqNum);
-			outputLog("Actual Send Packet:", 2);
-			outputLog(self.writeReq.slice(0, curLength), 2);
+			outputLog("Actual Send Packet:", "DEBUG");
+			outputLog(self.writeReq.slice(0, curLength), "DEBUG");
 			if (self.isAscii) {
 				self.netClient.write(asciize(self.writeReq.slice(0, curLength)));  // was 31
 				sentCount++;
@@ -1546,8 +1546,8 @@ MCProtocol.prototype.onResponse = function (rawdata, rinfo) {
 	outputLog('Valid MC Response Received (not yet checked for error)', "DEBUG");
 
 	// Log the receive
-	outputLog('Received ' + data.length + ' bytes of data from PLC.', "INFO");
-	outputLog(data, 2);
+	outputLog('Received ' + data.length + ' bytes of data from PLC.', "DEBUG");
+	outputLog(data, "DEBUG");
 
 	//1E / 3E frame...
 	// On a lot of other industrial protocols the sequence number is coded as part of the 
@@ -1562,7 +1562,7 @@ MCProtocol.prototype.onResponse = function (rawdata, rinfo) {
 
 	if(!_isReading && !_isWriting){
 		outputLog("Unexpected data received " + JSON.stringify(data) + " dropping it! ", "WARN");
-		outputLog(rh,1);
+		outputLog(rh,"TRACE");
 		return null;
 	}
 	if(self.frame != "4E"){
@@ -1571,7 +1571,7 @@ MCProtocol.prototype.onResponse = function (rawdata, rinfo) {
 	}
 	if(rh.seqNum != self.lastPacketSent.seqNum){
 		outputLog(`Unexpected response.  Expected sequence number ${self.lastPacketSent.seqNum}, received ${rh.seqNum} - dropping`, "WARN");
-		outputLog(rh,1);
+		outputLog(rh,"TRACE");
 		return null;
 	}
 	if(rh.valid){
@@ -1587,7 +1587,7 @@ MCProtocol.prototype.onResponse = function (rawdata, rinfo) {
 		}
 	} else {
 		outputLog("Response is not valid - dropping", "WARN");
-		outputLog(rh,1);
+		outputLog(rh,"TRACE");
 		return null;
 	}
 }
@@ -1625,7 +1625,7 @@ MCProtocol.prototype.writeResponse = function (data, decodedHeader) {
 	// Make a note of the time it took the PLC to process the request.  
 	self.writePacketArray[sentPacketNum].reqTime = process.hrtime(self.writePacketArray[sentPacketNum].reqTime);
 	let wtms = (self.writePacketArray[sentPacketNum].reqTime[0] * 1000) + Math.round(self.writePacketArray[sentPacketNum].reqTime[1] * 10 / 1e6) / 10;
-	outputLog('Write Time is ' + wtms + 'ms.', 1);
+	outputLog('Write Time is ' + wtms + 'ms.', "TRACE");
 
 	if (!self.writePacketArray[sentPacketNum].rcvd) {
 		self.writePacketArray[sentPacketNum].rcvd = true;
@@ -1785,7 +1785,7 @@ MCProtocol.prototype.readResponse = function (data, decodedHeader) {
 
 				if (typeof (itemRef.cb) === 'function') {
 					outputLog("Now calling back item.cb(). Sending the following values...", "DEBUG", self.connectionID);
-					outputLog(util.format(result), 2);
+					outputLog(util.format(result), "DEBUG");
 					itemRef.cb(!result.isGood, result)
 				}
 				if (itemRef.action == "read") {
@@ -1799,7 +1799,7 @@ MCProtocol.prototype.readResponse = function (data, decodedHeader) {
 		self.emit('message',anyBadQualities, results);
 		if (typeof (self.readDoneCallback) === 'function') {
 			outputLog("Now calling back readDoneCallback(). Sending the following values...", "DEBUG", self.connectionID);
-			outputLog(util.format(results), 2);
+			outputLog(util.format(results), "DEBUG");
 			
 			self.readDoneCallback(anyBadQualities, results);
 		}
@@ -1841,7 +1841,7 @@ MCProtocol.prototype.connectionReset = function () {
 
 MCProtocol.prototype.resetNow = function () {
 	var self = this;
-	outputLog('resetNow is happening', "INFO");
+	outputLog('resetNow is happening', "DEBUG");
 	if(self.connectionState == 4){
 		if(self.connectionParams.protocol == "UDP"){
 				self.netClient.close();
@@ -1856,14 +1856,14 @@ MCProtocol.prototype.resetNow = function () {
 	if (typeof (self.resetTimeout) !== 'undefined') {
 		clearTimeout(self.resetTimeout);
 		self.resetTimeout = undefined;
-		outputLog('Clearing an earlier scheduled reset', "INFO");
+		outputLog('Clearing an earlier scheduled reset', "DEBUG");
 	}
 }
 
 MCProtocol.prototype.connectionCleanup = function () {
 	var self = this;
 	self.connectionState = 0;
-	outputLog('Connection cleanup is happening', "INFO");
+	outputLog('Connection cleanup is happening', "DEBUG");
 	if (typeof (self.netClient) !== "undefined") {
 		self.netClient.removeAllListeners('message');
 		self.netClient.removeAllListeners('data');
@@ -2401,7 +2401,6 @@ function processMCReadItem(theItem, isAscii, frame) {
 					}
 					break;
 				case "BIT":
-					//			outputLog("Reading single Value ByteBufferLength is " + theItem.byteBuffer.length, 1);
 					if (theItem.bitNative) {
 						if (isAscii) {
 							theItem.value = (((theItem.byteBuffer.readUInt16BE(thePointer) >> (theItem.remainder)) & 1) ? true : false);
@@ -3086,7 +3085,7 @@ function PLCItem(owner) { // Object
 					options: (matches[7]) ? JSON.parse(matches[7].replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ')) || {} : {}
 				}
 
-			outputLog(`${addr} == ${util.format(spec)}`, 2);
+			outputLog(`${addr} == ${util.format(spec)}`, "DEBUG");
 
 			//determine the device area
 			theItem.digitSpec = spec.digitSpec;
@@ -3346,10 +3345,10 @@ function PLCItem(owner) { // Object
 			MCCommand[1] = 0xff;
 	
 			if (isAscii) {
-				outputLog("We're Ascii", 2);
+				outputLog("We're Ascii", "DEBUG");
 				MCCommand.writeUInt16BE(monitoringTime, 2);
 			} else {
-				outputLog("We're Binary", 2);
+				outputLog("We're Binary", "DEBUG");
 				MCCommand.writeUInt16LE(monitoringTime, 2);
 			}
 	

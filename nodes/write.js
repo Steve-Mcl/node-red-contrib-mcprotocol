@@ -213,11 +213,6 @@ module.exports = function(RED) {
                 });
                 return;
               } else {
-                // if (typeof value === "string") {
-                //   data = csv2arr(value);
-                // } else {
-                //   data = value;
-                // }
                 data = value;
               }
             }
@@ -229,17 +224,6 @@ module.exports = function(RED) {
           //node.error("Data is empty", msg);
           return;
         }
-
-        // if (typeof data == "number") {
-        //   console.log('mcwrite input:data == "number"')       ;
-        //   data = [data];
-        // }
-
-        // if (data.length != count) {
-        //   node.error("data length and count are not equal");
-        //   node.status({ fill: "red", shape: "ring", text: "data length and count are not equal" });
-        //   return;
-        // }
 
         try {
           node.status({ fill: "yellow", shape: "ring", text: "write" });
