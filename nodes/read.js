@@ -142,7 +142,7 @@ module.exports = function(RED) {
         // msg.valueType
 
         var data = msg.value;
-        if (data && !problem) {
+        if (data != null && !problem) {
           let iWD = msg.deviceNo;
           let loopBit = 0,
             bitNo = msg.bitOffset;
@@ -158,6 +158,7 @@ module.exports = function(RED) {
               }
               JSONData[buff_address] = data;
             } else {
+              if(!Array.isArray(data)) data = [data];
               for (var x in data) {
                 let buff_address = "";
                 if (msg.dataType == "BIT" && msg.deviceCodeType != "BIT") {
