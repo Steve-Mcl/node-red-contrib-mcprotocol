@@ -219,7 +219,7 @@ module.exports = function(RED) {
           );
         }
 
-        if (!data) {
+        if (data == null) {
           handleError("data is empty", msg, node, node.errorHandling);
           //node.error("Data is empty", msg);
           return;

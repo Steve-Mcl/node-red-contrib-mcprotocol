@@ -1,7 +1,7 @@
 {
     "name": "node-red-contrib-mcprotocol",
-    "version": "1.1.5",
-    "description": "MC PROTOCOL Ethernet functions 'Read' and 'write' for communicating with MITSUBISHI PLCs from node-red",
+    "version": "1.1.6",
+    "description": "MC PROTOCOL Ethernet 'Read' and 'write' nodes for communicating with MITSUBISHI PLCs from node-red",
     "keywords": [
         "node-red",
         "MITSUBISHI",

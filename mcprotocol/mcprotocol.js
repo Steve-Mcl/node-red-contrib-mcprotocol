@@ -1227,8 +1227,8 @@ MCProtocol.prototype.prepareReadPacket = function (items) {
 		var remainingTotalArrayLength = blockListItem.totalArrayLength;
 
 		//initialise the buffers
-		blockListItem.byteBuffer = new Buffer(blockListItem.byteLength);
-		blockListItem.qualityBuffer = new Buffer(blockListItem.byteLength);
+		blockListItem.byteBuffer.fill(0)// = new Buffer(blockListItem.byteLength);
+		blockListItem.qualityBuffer.fill(0)// = new Buffer(blockListItem.byteLength);
 		
 		blockListItem.requestReference = [];
 		
@@ -2932,14 +2932,24 @@ function PLCItem(owner) { // Object
 	this.readTransportCode = undefined;
 	this.writeTransportCode = undefined;
 
+	// // This is where the data can go that arrives in the packet, before calculating the value.  
+	// this.byteBuffer = undefined;//new Buffer(8192); //now initialised to correct size - when needed
+	// this.writeBuffer = undefined;//new Buffer(8192); //now initialised to correct size - when needed
+
+	// // We use the "quality buffer" to keep track of whether or not the requests were successful.  
+	// // Otherwise, it is too easy to lose track of arrays that may only be partially complete.  
+	// this.qualityBuffer = undefined;//new Buffer(8192); //now initialised to correct size - when needed
+	// this.writeQualityBuffer = undefined;//new Buffer(8192); //now initialised to correct size - when needed
+
 	// This is where the data can go that arrives in the packet, before calculating the value.  
-	this.byteBuffer = undefined;//new Buffer(8192); //now initialised to correct size - when needed
-	this.writeBuffer = undefined;//new Buffer(8192); //now initialised to correct size - when needed
+	this.byteBuffer = Buffer.alloc(8192); 
+	this.writeBuffer = Buffer.alloc(8192); 
 
 	// We use the "quality buffer" to keep track of whether or not the requests were successful.  
 	// Otherwise, it is too easy to lose track of arrays that may only be partially complete.  
-	this.qualityBuffer = undefined;//new Buffer(8192); //now initialised to correct size - when needed
-	this.writeQualityBuffer = undefined;//new Buffer(8192); //now initialised to correct size - when needed
+	this.qualityBuffer = Buffer.alloc(8192); 
+	this.writeQualityBuffer = Buffer.alloc(8192); 
+
 
 	// Then we have item properties
 	this.value = undefined;
@@ -3647,8 +3657,8 @@ function PLCItem(owner) { // Object
 		try {
 			
 			 //if(!theItem.writeBuffer || !theItem.writeQualityBuffer || !(theItem.writeBuffer.length == theItem.byteLengthWrite)){
-			 	theItem.writeBuffer = new Buffer(theItem.byteLengthWrite);
-			 	theItem.writeQualityBuffer = new Buffer(theItem.byteLengthWrite);
+			 	theItem.writeBuffer.fill(0) //= new Buffer(theItem.byteLengthWrite+1);
+			 	theItem.writeQualityBuffer.fill(0) //= new Buffer(theItem.byteLengthWrite+1);
 			 //}
 			// if(!theItem.writeBuffer){
 			// 	theItem.writeBuffer = new Buffer(theItem.byteLengthWrite);
