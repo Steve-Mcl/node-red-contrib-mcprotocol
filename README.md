@@ -1,8 +1,10 @@
 node-red-contrib-mcprotocol
 ===========================
 
+## About
+
 ### Overview
-This is a Node-RED node module to directly interface with MITSUBISHI PLCs over mcprotocol Ethernet protocol. 
+This is a Node-RED node module to directly interface with MITSUBISHI PLCs over Ethernet using MC Protocol. 
 
 ### Features
 - Both TCP and UDP connections are possible
@@ -15,11 +17,24 @@ This is a Node-RED node module to directly interface with MITSUBISHI PLCs over m
   - R
 - ASCII and BINARY mode *(See Note 2)*
 
-### Prerequisites for Windows
+### Recommendation
+If your PLC suports UDP + 4E, this is by far most reliable. 
 
-* git	(Used for repository cloning/downloads)
-* node.js	(Background system for Node-RED)
+### NOTES
+1. For A series PLC, only 1E frames are supported
+2. ASCII mode is currently not supported for frames 3E and 4E
+---
+## Install
+
+### Prerequisites
+
+* node.js	(runtime for Node-RED)
 * Node-RED
+* [optional] git (Used for repository cloning/downloads)
+
+### Easy install
+
+Use the Manage Palette > Install option from the menu inside node-red
 
 
 ### NPM install
@@ -44,12 +59,7 @@ cd ~/.node-red
 npm install c:/tempsourcefolder/node-red-contrib-mcprotocol
 ```
 
+---
 
-### NOTES
-1. For A series PLC, only 1E frames are supported
-2. ASCII mode is currently not supported for frames 3E and 4E
-
-
-#### Credits
+### Credits
 * [plcpeople](https://github.com/plcpeople/mcprotocol) for the original implementation of mcprotocol
-* [Jozo132](https://github.com/Jozo132/node-omron-read.git) for the original implementation node-omron-read on which this contrib node was first based

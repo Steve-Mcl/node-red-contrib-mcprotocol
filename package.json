@@ -1,7 +1,11 @@
 {
     "name": "node-red-contrib-mcprotocol",
-    "version": "1.1.6",
+    "version": "1.1.7",
     "description": "MC PROTOCOL Ethernet 'Read' and 'write' nodes for communicating with MITSUBISHI PLCs from node-red",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Steve-Mcl/node-red-contrib-mcprotocol.git"
+    },
     "keywords": [
         "node-red",
         "MITSUBISHI",
@@ -15,5 +19,19 @@
             "mcWrite": "nodes/write.js",
             "mcConnection": "nodes/connection.js"
         }
-    }
+    },
+    "author": {
+        "name": "Steve-Mcl"
+    },
+    "license": "MIT",
+    "bugs": {
+    "url": "https://github.com/Steve-Mcl/node-red-contrib-mcprotocol/issues"
+    },
+    "homepage": "https://github.com/Steve-Mcl/node-red-contrib-mcprotocol#readme",
+    "maintainers": [
+        {
+          "name": "Steve-Mcl",
+          "email": "44235289+Steve-Mcl@users.noreply.github.com"
+        }
+    ]
 }
