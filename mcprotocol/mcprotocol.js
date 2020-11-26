@@ -49,7 +49,7 @@ function MCProtocol() {
 	var self = this;
 
 	//self.data = {};//for data access
-	self.readReq = new Buffer(1000);//not calculated
+	self.readReq = Buffer.alloc(1000);//not calculated
 	self.writeReq;// = new Buffer(1500);//size depends on PLC type!  As Q/L can read/write 950 WDs
 	self.queue = [];
 	self.resetPending = false;
@@ -232,7 +232,7 @@ MCProtocol.prototype.initiateConnection = function (cParam, callback) {
 	}
 
 	self.plcSeries = MCProtocol.prototype.enumPLCTypes[self.plcType];
-	self.writeReq = new Buffer(self.plcSeries.requiredWriteBufferSize);//size depends on PLC type!  As Q/L can read/write 950 WDs
+	self.writeReq = Buffer.alloc(self.plcSeries.requiredWriteBufferSize);//size depends on PLC type!  As Q/L can read/write 950 WDs
 	self.connectionParams = cParam;
 	self.connectCallback = callback;
 	self.connectCBIssued = false;
@@ -1929,7 +1929,7 @@ function doneSending(element) {
 function processMBPacket(decodedHeader, theData, theItem, thePointer, frame) {
 	
 	// Create a new buffer for the quality.  
-	theItem.qualityBuffer = new Buffer(theItem.byteLength);
+	theItem.qualityBuffer = Buffer.alloc(theItem.byteLength);
 	theItem.qualityBuffer.fill(MCProtocol.prototype.enumOPCQuality.unknown.value);
 	//reset some flags...#
 	theItem.endCode = null;
@@ -2193,7 +2193,7 @@ function writePostProcess(theItem) {
 
 function processMCReadItem(theItem, isAscii, frame) {
 
-	var thePointer = 0, tempBuffer = new Buffer(4);
+	var thePointer = 0, tempBuffer = Buffer.alloc(4);
 	theItem.recvTime = Date.now();
 	let quals = MCProtocol.prototype.enumOPCQuality;
 	if (theItem.arrayLength > 1) {
@@ -2484,7 +2484,7 @@ Buffer.prototype.setPointer = function (pos) {
 }
 
 Buffer.prototype.setFloatBESwap = function (val, ptr) {
-	var newBuf = new Buffer(4);
+	var newBuf = Buffer.alloc(4);
 	newBuf.writeFloatBE(val, 0);
 	this[ptr + 2] = newBuf[0];
 	this[ptr + 3] = newBuf[1];
@@ -2495,7 +2495,7 @@ Buffer.prototype.setFloatBESwap = function (val, ptr) {
 
 
 Buffer.prototype.getFloatBESwap = function(ptr) {
-	var newBuf = new Buffer(4);
+	var newBuf = Buffer.alloc(4);
 	newBuf[0] = this[ptr + 2];
 	newBuf[1] = this[ptr + 3];
 	newBuf[2] = this[ptr + 0];
@@ -2505,7 +2505,7 @@ Buffer.prototype.getFloatBESwap = function(ptr) {
 
 
 Buffer.prototype.getInt32BESwap = function(ptr) {
-	var newBuf = new Buffer(4);
+	var newBuf = Buffer.alloc(4);
 	newBuf[0] = this[ptr + 2];
 	newBuf[1] = this[ptr + 3];
 	newBuf[2] = this[ptr + 0];
@@ -2514,7 +2514,7 @@ Buffer.prototype.getInt32BESwap = function(ptr) {
 }
 
 Buffer.prototype.setInt32BESwap = function(val,ptr) {
-	var newBuf = new Buffer(4);
+	var newBuf = Buffer.alloc(4);
 	newBuf.writeInt32BE(Math.round(val), 0);
 	this[ptr + 2] = newBuf[0];
 	this[ptr + 3] = newBuf[1];
@@ -2524,7 +2524,7 @@ Buffer.prototype.setInt32BESwap = function(val,ptr) {
 }
 
 Buffer.prototype.getUInt32BESwap = function(ptr) {
-	var newBuf = new Buffer(4);
+	var newBuf = Buffer.alloc(4);
 	newBuf[0] = this[ptr + 2];
 	newBuf[1] = this[ptr + 3];
 	newBuf[2] = this[ptr + 0];
@@ -2533,7 +2533,7 @@ Buffer.prototype.getUInt32BESwap = function(ptr) {
 }
 
 Buffer.prototype.setUInt32BESwap = function(val,ptr) {
-	var newBuf = new Buffer(4);
+	var newBuf = Buffer.alloc(4);
 	newBuf.writeUInt32BE(Math.round(val), 0);
 	this[ptr + 2] = newBuf[0];
 	this[ptr + 3] = newBuf[1];
@@ -3313,7 +3313,7 @@ function PLCItem(owner) { // Object
 	this.toBuffer =	function _MCAddrToBuffer(isAscii, frame, plcType, seqNum, network, PCStation, PLCStation, PLCModuleNo) {
 		var self = this;
 		var writeOperation = self.writeValue === undefined ? false : true;
-		var writeLength, MCCommand = new Buffer(2500);
+		var writeLength, MCCommand = Buffer.alloc(2500);
 		self.buffer = undefined;
 		self.isAscii = isAscii;
 		self.frame = frame;
@@ -3901,7 +3901,7 @@ function doNothing(arg) {
 function binarize(buf) {
 	var i, newBuf;
 	if (buf && !(buf.length % 2)) {
-		newBuf = new Buffer(buf.length / 2);
+		newBuf = Buffer.alloc(buf.length / 2);
 		for (i = 0; i < buf.length; i += 2) {
 			newBuf[i / 2] = parseInt("0x" + buf.toString('ascii', i, i + 2));
 			if (isNaN(newBuf[i / 2])) {
@@ -3916,7 +3916,7 @@ function binarize(buf) {
 function asciize(buf) {
 	var i, newBuf;
 	if (buf) {
-		newBuf = new Buffer(buf.length * 2);
+		newBuf = Buffer.alloc(buf.length * 2);
 		for (i = 0; i < buf.length; i += 1) {
 			newBuf.write(zeroPad(buf[i], 2), i * 2, 2, 'ascii');
 		}
