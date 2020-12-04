@@ -1561,7 +1561,7 @@ MCProtocol.prototype.onResponse = function (rawdata, rinfo) {
 	//TODO: Consider data having multiple responses (e.g. 4E send multiple commands with seq - multiple responses may arrive in same packet)
 
 	if(!_isReading && !_isWriting){
-		outputLog("Unexpected data received " + JSON.stringify(data) + " dropping it! ", "WARN");
+		outputLog("Unexpected data received " + JSON.stringify(data) + " dropping packet! ", "WARN");
 		outputLog(rh,"TRACE");
 		return null;
 	}
@@ -1569,8 +1569,13 @@ MCProtocol.prototype.onResponse = function (rawdata, rinfo) {
 		//1E and 3E dont have seq number. Ideally for 4E frame, we would send all frames (upto buffer capability) & match up the responses to the sequence numbers
 		rh.seqNum = self.lastPacketSent.seqNum;
 	}
+	if(rh.valid == false && rh.lastError) {
+		outputLog(rh.lastError + " - dropping packet", "ERROR");
+		outputLog(rh,"TRACE");
+		return null;		
+	}
 	if(rh.seqNum != self.lastPacketSent.seqNum){
-		outputLog(`Unexpected response.  Expected sequence number ${self.lastPacketSent.seqNum}, received ${rh.seqNum} - dropping`, "WARN");
+		outputLog(`Unexpected response.  Expected sequence number ${self.lastPacketSent.seqNum}, received ${rh.seqNum} - dropping packet`, "WARN");
 		outputLog(rh,"TRACE");
 		return null;
 	}
@@ -1956,7 +1961,7 @@ function processMBPacket(decodedHeader, theData, theItem, thePointer, frame) {
 	if (decodedHeader.dataLength !== expectedLength) {
 		decodedHeader.valid = false;
 		theItem.valid = false;
-		theItem.lastError = 'Invalid "Response Data Length" - Expected ' + expectedLength + ' but got ' + (rDataLength) + ' bytes.';
+		theItem.lastError = 'Invalid "Response Data Length" - Expected ' + expectedLength + ' but got ' + (decodedHeader.dataLength) + ' bytes.';
 		decodedHeader.lastError = theItem.lastError;
 		outputLog(theItem.lastError, "ERROR");
 		return 1;
