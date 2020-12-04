@@ -114,16 +114,18 @@ module.exports = function(RED) {
         }
 
         if (problem) {
+          msg.problem = true;
           node.status({ fill: "grey", shape: "ring", text: "Quality Issue" });
         } else {
           node.status({ fill: "green", shape: "dot", text: "Good" });
         }
-        if(problem){
-          msg.problem = true;
-        }
         node.msgMem.payload = !problem;
         node.msgMem.mcWriteDetails = msg;
-        node.send(node.msgMem);
+        if(problem) {
+          handleError(error, node.msgMem, node, node.errorHandling);
+        } else {
+          node.send(node.msgMem);
+        }
       }
       this.on("input", function(msg) {
         if (msg.disconnect === true || msg.topic === "disconnect") {

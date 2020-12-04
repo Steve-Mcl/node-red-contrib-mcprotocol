@@ -203,7 +203,11 @@ module.exports = function(RED) {
             node.msgMem.payload = data;
           }
         }
-        node.send(node.msgMem);
+        if(problem) {
+          handleError(error, node.msgMem, node, node.errorHandling);
+        } else {
+          node.send(node.msgMem);
+        }
       }
 
       this.on("input", function(msg) {
