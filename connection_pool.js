@@ -119,7 +119,7 @@ module.exports = {
                   );
                   obj.connect();
                 }
-              }, 1000); //parameterise
+              }, 1000); //parametrise
             }
           }
         });
@@ -140,7 +140,7 @@ module.exports = {
                 );
                 obj.connect();
               }
-            }, 1000); //parameterise
+            }, 1000); //parametrise
           }
         });
 

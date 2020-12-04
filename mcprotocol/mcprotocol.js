@@ -207,7 +207,7 @@ MCProtocol.prototype.initiateConnection = function (cParam, callback) {
 	}
 
 	if(!self.enumDeviceCodeSpec){
-		throw new Error("Error determinng device code specification. Check combination of PLC Type and Frame Type are valid");
+		throw new Error("Error determining device code specification. Check combination of PLC Type and Frame Type are valid");
 	}
 
 	if (typeof (cParam.PLCStation) !== 'undefined') {
@@ -1924,7 +1924,7 @@ function outputLog(txt, debugLevel, id) {
 				break;
 		}
 	}
-	if (  effectiveDebugLevel >= level) { console.log('[' + s + idtext + '] ' + util.format(txt)); }
+	if (effectiveDebugLevel >= level) { console.log('[' + s + idtext + '] ' + util.format(txt)); }
 }
 
 function doneSending(element) {
