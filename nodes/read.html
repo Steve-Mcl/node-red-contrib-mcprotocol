@@ -79,35 +79,43 @@ SOFTWARE.
   });
 </script>
 
+<style>
+  .mc-protocol-form > .form-row > label {
+    width: 120px !important;
+  }
+</style>
+
 <script type="text/html" data-template-name="MC Read">
-  <div class="form-row">
-      <label for="node-input-name"><i class="icon-tag"></i> <span data-i18n="read.label.name"> Name</span></label>
-      <input type="text" id="node-input-name" placeholder="Name">
+  <div class="mc-protocol-form">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> <span data-i18n="read.label.name"> Name</span></label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-connection"><i class="icon-globe"></i><span data-i18n="read.label.connection"> Connection</span></label>
+        <input type="text" id="node-input-connection">
+    </div>
+    <div class="form-row">
+        <label for="node-input-address"><i class="fa fa-envelope"></i><span data-i18n="ab-df1-read.label.address"> Address</span></label>
+        <input type="hidden" id="node-input-addressType">
+        <input style="width: 70%" type="text" id="node-input-address" placeholder="D0">
+    </div>
+    <div class="form-row">
+      <label for="node-input-outputFormat"><i class="fa fa-sign-out"></i><span data-i18n="ab-df1-read.label.outputFormat"> Output format</span></label>
+      <select style="width: 70%" id="node-input-outputFormat">
+          <option value="0">JSON Object</option>
+          <option value="1">Array</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="node-input-errorHandling"><i class="fa fa-exclamation"></i><span data-i18n="ab-df1-read.label.errors"> Errors</span></label>
+      <select style="width: 70%" id="node-input-errorHandling">
+        <option value="throw">Throw (default)</option>
+        <option value="msg">Output to msg.error</option>
+        <option value="output2">Send to seperate output</option>
+      </select>
+    </div>  
   </div>
-  <div class="form-row">
-      <label for="node-input-connection"><i class="icon-globe"></i><span data-i18n="read.label.connection"> Connection</span></label>
-      <input type="text" id="node-input-connection">
-  </div>
-  <div class="form-row">
-      <label for="node-input-address"><i class="fa fa-envelope"></i><span data-i18n="ab-df1-read.label.address"> Address</span></label>
-      <input type="hidden" id="node-input-addressType">
-      <input style="width: 70%" type="text" id="node-input-address" placeholder="D0">
-  </div>
-  <div class="form-row">
-    <label for="node-input-outputFormat"><i class="fa fa-sign-out"></i><span data-i18n="ab-df1-read.label.outputFormat"> Output format</span></label>
-    <select style="width: 70%" id="node-input-outputFormat">
-        <option value="0">JSON Object</option>
-        <option value="1">Array</option>
-    </select>
-  </div>
-  <div class="form-row">
-    <label for="node-input-errorHandling"><i class="fa fa-exclamation"></i><span data-i18n="ab-df1-read.label.errors"> Errors</span></label>
-    <select style="width: 70%" id="node-input-errorHandling">
-      <option value="throw">Throw (default)</option>
-      <option value="msg">Output to msg.error</option>
-      <option value="output2">Send to seperate output</option>
-    </select>
-  </div>  
 </script>
 
 
