@@ -592,8 +592,9 @@ function _writeItems(self, arg, value, cb, queuedItem) {
 	plcitems.map(function (item) {
 		if (item.initialised == false) {
 			if (item.cb) {
-				var cbd = new PLCWriteResult(item.useraddr, item.addr, MCProtocol.prototype.enumOPCQuality.badConfigErrInServer.value, 0);
-				cbd.extraInfo = item.initError;
+				var cbd = new PLCWriteResult(item.useraddr, item.addr, MCProtocol.prototype.enumOPCQuality.badDeviceFailure.value, 0);
+				cbd.error = item.initError;
+				cbd.problem = true;
 				item.cb(true, cbd);
 			}
 			item.extraInfo = item.initError;
@@ -622,6 +623,8 @@ function _writeItems(self, arg, value, cb, queuedItem) {
 		if (!item.bufferized) {
 			if (item.cb) {
 				var cbd = new PLCWriteResult(item.useraddr, item.addr, MCProtocol.prototype.enumOPCQuality.bad.value, 0);
+				cbd.error = item.lastError;
+				cbd.problem = true;
 				item.cb(true, cbd);
 			}
 			item.extraInfo = item.lastError;
