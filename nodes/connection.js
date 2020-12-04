@@ -38,6 +38,7 @@ module.exports = function(RED) {
     this.options.PCStation = config.PCStation ? config.PCStation : 0xff;
     this.options.PLCModuleNo = config.PLCModuleNo ? config.PLCModuleNo : 0x3ff;
     this.options.network = config.network ? config.network : 0;
+    this.options.timeout = config.timeout || 1000;
     this.options.octalInputOutput = config.octalInputOutput
       ? config.octalInputOutput
       : false;

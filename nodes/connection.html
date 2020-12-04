@@ -95,6 +95,10 @@ SOFTWARE.
     </label>
   </div>
 
+    <div class="form-row">
+      <label for="node-input-timeout"><i class="fa fa-clock-o"></i> <span data-i18n="mcprotocol-read.label.timeout">Timeout MS</span></label>
+      <input type="text" id="node-config-input-timeout" placeholder="1000 ms is recommended timeout">
+    </div> 
 </script>
 
 
@@ -116,6 +120,7 @@ SOFTWARE.
       PLCModuleNo : { value: undefined},
       network : { value: undefined},
       octalInputOutput : { value: false},
+      timeout : { value: 1000},
 
     },
     label: function () {
