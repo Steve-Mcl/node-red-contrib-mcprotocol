@@ -25,10 +25,11 @@ SOFTWARE.
 module.exports = function(RED) {
   var connection_pool = require("../connection_pool.js");
   var util = require("util");
-
+  function isNumeric(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n);
+  }
   function mcWrite(config) {
     RED.nodes.createNode(this, config);
-
     this.name = config.name;
     this.topic = config.topic;
     this.connection = config.connection;
@@ -45,7 +46,7 @@ module.exports = function(RED) {
     var context = this.context();
     var node = this;
     node.busy = false;
-    node.busyTimeMax = 1000; //TODO: Parameterise hard coded value!
+    node.busyTimeMax = 1000; //Initial value, will be updated bt selected connection
     //var mcprotocol = require('../mcprotocol.js');
     if (this.connectionConfig) {
       node.status({ fill: "yellow", shape: "ring", text: "initialising" });
@@ -56,6 +57,7 @@ module.exports = function(RED) {
         this.connectionConfig.host,
         options
       );
+      if(options.timeout && isNumeric(options.timeout)) node.busyTimeMax = parseInt(options.timeout);
 
       this.connection.on("error", function(error) {
         console.error(error);
