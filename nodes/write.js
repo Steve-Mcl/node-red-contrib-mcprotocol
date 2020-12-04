@@ -122,7 +122,7 @@ module.exports = function(RED) {
         node.msgMem.payload = !problem;
         node.msgMem.mcWriteDetails = msg;
         if(problem) {
-          handleError(error, node.msgMem, node, node.errorHandling);
+          handleError(msg.error || "", node.msgMem, node, node.errorHandling);
         } else {
           node.send(node.msgMem);
         }

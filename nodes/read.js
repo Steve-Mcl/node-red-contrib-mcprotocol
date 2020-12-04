@@ -204,7 +204,7 @@ module.exports = function(RED) {
           }
         }
         if(problem) {
-          handleError(error, node.msgMem, node, node.errorHandling);
+          handleError(msg.error || "", node.msgMem, node, node.errorHandling);
         } else {
           node.send(node.msgMem);
         }
