@@ -2486,6 +2486,7 @@ function isQualityOK(obj) {
 
 Buffer.prototype.setPointer = function (pos) {
 	this.pointer = pos;
+	return ptr;
 }
 
 Buffer.prototype.setFloatBESwap = function (val, ptr) {
@@ -2495,7 +2496,7 @@ Buffer.prototype.setFloatBESwap = function (val, ptr) {
 	this[ptr + 3] = newBuf[1];
 	this[ptr + 0] = newBuf[2];
 	this[ptr + 1] = newBuf[3];
-	return;
+	return ptr + 4;
 }
 
 
@@ -2525,7 +2526,7 @@ Buffer.prototype.setInt32BESwap = function(val,ptr) {
 	this[ptr + 3] = newBuf[1];
 	this[ptr + 0] = newBuf[2];
 	this[ptr + 1] = newBuf[3];
-	return;
+	return ptr + 4;
 }
 
 Buffer.prototype.getUInt32BESwap = function(ptr) {
@@ -2544,7 +2545,7 @@ Buffer.prototype.setUInt32BESwap = function(val,ptr) {
 	this[ptr + 3] = newBuf[1];
 	this[ptr + 0] = newBuf[2];
 	this[ptr + 1] = newBuf[3];
-	return;
+	return ptr + 4;
 }
 
 Buffer.prototype.addByte = function (v) {
@@ -2552,6 +2553,7 @@ Buffer.prototype.addByte = function (v) {
 		this.pointer = 0;
 	this.writeUInt8(v, this.pointer);
 	this.pointer += 1;
+	return this.pointer;
 }
 
 Buffer.prototype.addUint16LE = function (v) {
@@ -2559,6 +2561,7 @@ Buffer.prototype.addUint16LE = function (v) {
 		this.pointer = 0;
 	this.writeUInt16LE(v, this.pointer);
 	this.pointer += 2;
+	return this.pointer;
 }
 
 Buffer.prototype.addUint32LE = function (v) {
@@ -2566,6 +2569,7 @@ Buffer.prototype.addUint32LE = function (v) {
 		this.pointer = 0;
 	this.writeUInt32LE(v, this.pointer);
 	this.pointer += 4;
+	return this.pointer;
 }
 
 //https://dl.mitsubishielectric.com/dl/fa/document/manual/plc/sh080008/sh080008x.pdf PG 464
