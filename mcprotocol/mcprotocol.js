@@ -3469,16 +3469,17 @@ function PLCItem(owner) { // Object
 				4E Q/L example
 				0                             1                             2                             3
 				0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0
-				54 00 00 ff ff 03 00 0a 00 10 00 01 04 00 00 d2 04 00 A8 37 00
+				54 00 02 00 00 00 00 ff ff 03 00 0a 00 10 00 01 04 00 00 d2 04 00 A8 37 00
 				
-				Subheader 4E 0x0054 + serial number + 0x0000 (6b) 1234H (5400 = 4E frame, 3412=1234h, 0000 fixed) 
+				Subheader 4E 0x0054 + serial number + 0x0000 (6b) 1234H (5400 = 4E frame, 0200=2h, 0000 fixed) 
 				0: 54 00 34 12 00 00  
 		
 				Subheader 3E 5000  fixed 
 				0: 50 00
 		
 				access route (5b)- connect to local example net0, pcno ff, 
-				6: 00 ff ff 03 00
+				4E:6: 00 ff ff 03 00
+				3E:2: 00 ff ff 03 00
 				* (Byte) Network No ,  Specify the network No. of an access target.
 				* (Byte) PC No. (byte) Specify the network module station No. of an access target
 				* (UINT16 LE) Request destination module I/O No 
@@ -3489,7 +3490,8 @@ function PLCItem(owner) { // Object
 					ex. Accessing the connected station (host station) FFH 03H 00H
 					
 				Req Data length (2b) (UINT16 LE) =  noof bytes from Monitoring timer --> Request data
-				11: 0a 00     (10 bytes)
+				4E:11: 0a 00     (10 bytes)
+				3E:07: 0a 00     (10 bytes)
 		
 				Monitoring timer (2b) (0= wait forever, 01H=250ms ~ 28H=40x250=10s )
 				13: 10 00  	
