@@ -22,6 +22,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. 
 */
 
+function isNumeric(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+function safeInt(int, def) {
+  try {
+    if(typeof int == "number") return parseInt(int);
+    if(isNumeric(int)) return parseInt(int);
+  } catch (e) { }
+  return def
+}
+
 module.exports = function(RED) {
   function mcConnection(config) {
     RED.nodes.createNode(this, config);
@@ -34,11 +46,11 @@ module.exports = function(RED) {
     this.options.plcType = config.plcType ? config.plcType : "Q";
     this.options.frame = config.frame ? config.frame : "3E";
     this.options.ascii = config.ascii ? config.ascii : false;
-    this.options.PLCStation = config.PLCStation ? config.PLCStation : 0;
-    this.options.PCStation = config.PCStation ? config.PCStation : 0xff;
-    this.options.PLCModuleNo = config.PLCModuleNo ? config.PLCModuleNo : 0x3ff;
-    this.options.network = config.network ? config.network : 0;
-    this.options.timeout = config.timeout || 1000;
+    this.options.PLCStation = safeInt(config.PLCStation, 0);
+    this.options.PCStation = safeInt(config.PCStation, 0xff);
+    this.options.PLCModuleNo = safeInt(config.PLCModuleNo, 0x3ff);
+    this.options.network = safeInt(config.network, 0);
+    this.options.timeout = safeInt(config.timeout, 1000);
     this.options.octalInputOutput = config.octalInputOutput
       ? config.octalInputOutput
       : false;
