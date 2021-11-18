@@ -94,7 +94,6 @@ module.exports = {
               mcp.initiateConnection(options);
             }
           },
-
           disconnect: function() {
             this._instances -= 1;
             if (this._instances <= 0) {
@@ -104,7 +103,18 @@ module.exports = {
               util.log(`[mcprotocol] deleting connection from pool ~ ${id}`);
               delete pool[id];
             }
-          }
+          },
+          reinitialize: function() {
+            //in case of physical connection loss, it does not get the connection back
+            //when connecting again. the mcp object needs to be renewed. 
+            this.disconnect();
+            if (!mcp) {
+              mcp = new mcprotocol();
+              connecting = false;
+            }
+            this.connect();
+            this._instances += 1;
+          },
         };
 
         mcp.on("error", function(e) {

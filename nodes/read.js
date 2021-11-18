@@ -217,6 +217,9 @@ module.exports = function(RED) {
         } else if (msg.connect === true || msg.topic === "connect") {
           this.connection.connect();
           return;
+        } else if (msg.reinitialize === true || msg.topic === "reinitialize") {
+          this.connection.reinitialize();
+          return; 
         }
 
         if (node.busy) return; //TODO: Consider queueing inputs?
