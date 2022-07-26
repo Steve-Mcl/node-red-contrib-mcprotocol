@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. 
 */
 
-module.exports = function(RED) {
+module.exports = function (RED) {
   var connection_pool = require("../connection_pool.js");
   function isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
@@ -36,7 +36,7 @@ module.exports = function(RED) {
     this.addressType = config.addressType || "str";
     this.outputFormat = config.outputFormat || 0;
     this.errorHandling = config.errorHandling;
-    this.outputs = config.errorHandling === "output2" ? 2 : 1;//1 output pins if throw or msg.error, 2 outputs if errors to go to seperate output pin
+    this.outputs = config.errorHandling === "output2" ? 2 : 1; //1 output pins if throw or msg.error, 2 outputs if errors to go to seperate output pin
     this.logLevel = RED.settings.logging.console.level;
     this.connectionConfig = RED.nodes.getNode(this.connection);
     var context = this.context();
@@ -53,46 +53,47 @@ module.exports = function(RED) {
         this.connectionConfig.host,
         options
       );
-      if(options.timeout && isNumeric(options.timeout)) node.busyTimeMax = parseInt(options.timeout);
-      
+      if (options.timeout && isNumeric(options.timeout))
+        node.busyTimeMax = parseInt(options.timeout);
+
       node.status({ fill: "yellow", shape: "ring", text: "initialising" });
 
-      this.connection.on("error", function(error) {
+      this.connection.on("error", function (error) {
         console.error(error);
         node.status({ fill: "red", shape: "ring", text: "error" });
         node.busy = false;
       });
-      this.connection.on("open", function(error) {
+      this.connection.on("open", function (error) {
         node.status({ fill: "green", shape: "dot", text: "connected" });
       });
-      this.connection.on("close", function(error) {
+      this.connection.on("close", function (error) {
         node.status({ fill: "red", shape: "dot", text: "not connected" });
         node.busy = false;
       });
-      function handleError(err, msg, node, config, dont_send_msg){
-        if(typeof err === "string"){
+      function handleError(err, msg, node, config, dont_send_msg) {
+        if (typeof err === "string") {
           err = new Error(err);
         }
-        if(!config) config = {};
-        if(typeof config === "string"){
+        if (!config) config = {};
+        if (typeof config === "string") {
           config = {
-            errorHandling: config
-          }
+            errorHandling: config,
+          };
         }
         switch (config.errorHandling) {
           case "throw":
-            node.error(err,msg);
+            node.error(err, msg);
             break;
           case "msg":
             msg.error = err;
-            if(!dont_send_msg) node.send(msg);//send error on 1st pin
+            if (!dont_send_msg) node.send(msg); //send error on 1st pin
             break;
           case "output2":
-            node.send([null,{payload: err}]);//send error on 2nd pin
+            node.send([null, { payload: err }]); //send error on 2nd pin
             break;
-                
+
           default:
-            node.error(err,msg);
+            node.error(err, msg);
             break;
         }
       }
@@ -108,7 +109,7 @@ module.exports = function(RED) {
         node.msgMem.mcReadDetails.timeout = msg.timeout; //TODO
         node.msgMem.mcReadDetails.error = problem;
         node.msgMem.payload = null;
-        if(problem){
+        if (problem) {
           msg.problem = true;
         }
         if (msg.timeout) {
@@ -118,7 +119,7 @@ module.exports = function(RED) {
           var dbgmsg = {
             f: "myReply(msg)",
             msg: msg,
-            error: "timeout"
+            error: "timeout",
           };
           console.error(dbgmsg);
           node.msgMem.mcReadDetails.errorMsg = "timeout";
@@ -162,7 +163,7 @@ module.exports = function(RED) {
               }
               JSONData[buff_address] = data;
             } else {
-              if(!Array.isArray(data)) data = [data];
+              if (!Array.isArray(data)) data = [data];
               for (var x in data) {
                 let buff_address = "";
                 if (msg.dataType == "BIT" && msg.deviceCodeType != "BIT") {
@@ -203,19 +204,22 @@ module.exports = function(RED) {
             node.msgMem.payload = data;
           }
         }
-        if(problem) {
+        if (problem) {
           handleError(msg.error || "", node.msgMem, node, node.errorHandling);
         } else {
           node.send(node.msgMem);
         }
       }
 
-      this.on("input", function(msg) {
+      this.on("input", function (msg) {
         if (msg.disconnect === true || msg.topic === "disconnect") {
           this.connection.closeConnection();
           return;
         } else if (msg.connect === true || msg.topic === "connect") {
           this.connection.connect();
+          return;
+        } else if (msg.reinitialize === true || msg.topic === "reinitialize") {
+          this.connection.reinitialize();
           return;
         }
 
@@ -232,12 +236,17 @@ module.exports = function(RED) {
           msg,
           (err, value) => {
             if (err) {
-              handleError("Unable to evaluate address", msg, node, node.errorHandling);
+              handleError(
+                "Unable to evaluate address",
+                msg,
+                node,
+                node.errorHandling
+              );
               //node.error("Unable to evaluate address", msg);
               node.status({
                 fill: "red",
                 shape: "ring",
-                text: "Unable to evaluate address"
+                text: "Unable to evaluate address",
               });
               return;
             } else {
@@ -260,11 +269,11 @@ module.exports = function(RED) {
           node.request = {
             outputFormat: node.outputFormat ? "Array" : "JSON",
             address: addr,
-            timeStamp: Date.now()
+            timeStamp: Date.now(),
           };
 
           if (node.busyTimeMax) {
-            node.busyMonitor = setTimeout(function() {
+            node.busyMonitor = setTimeout(function () {
               if (node.busy) {
                 node.status({ fill: "red", shape: "ring", text: "timeout" });
                 handleError("timeout", msg, node, node.errorHandling);
@@ -283,7 +292,7 @@ module.exports = function(RED) {
           var dbgmsg = {
             info: "read.js-->on 'input'",
             connection: `host: ${node.connectionConfig.host}, port: ${node.connectionConfig.port}`,
-            address: addr
+            address: addr,
           };
           node.debug(dbgmsg);
           return;
@@ -296,7 +305,7 @@ module.exports = function(RED) {
     }
   }
   RED.nodes.registerType("MC Read", mcRead);
-  mcRead.prototype.close = function() {
+  mcRead.prototype.close = function () {
     if (this.connection) {
       this.connection.disconnect();
     }

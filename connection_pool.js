@@ -27,14 +27,14 @@ var util = require("util");
 var pool = {};
 
 module.exports = {
-  get: function(port, host, opts) {
+  get: function (port, host, opts) {
     var mcprotocol = require("./mcprotocol/mcprotocol.js");
     var id = `mcprotocol: {host:'${host || ""}', port: ${port || "''"}}`;
     //var id = `mcprotocol: {host:'${(host || "")}', port: ${(port || "''")}, frame:'${frame}', plcType:'${plcType}}`;
     var node = this;
 
     if (!pool[id]) {
-      pool[id] = (function() {
+      pool[id] = (function () {
         var options = opts || {};
         options.host = host;
         options.port = port;
@@ -57,14 +57,14 @@ module.exports = {
           getMCP: function mcp() {
             return mcp;
           },
-          getAutoConnect: function() {
+          getAutoConnect: function () {
             return options.autoConnect == true;
           },
-          setAutoConnect: function(b) {
+          setAutoConnect: function (b) {
             options.autoConnect = b == true;
           },
           _instances: 0,
-          write: function(addr, data, callback) {
+          write: function (addr, data, callback) {
             if (!mcp.isConnected()) {
               //this.connect();
               throw new Error("Not connected!");
@@ -72,7 +72,7 @@ module.exports = {
             var reply = mcp.writeItems(addr, data, callback);
             return reply;
           },
-          read: function(addr, callback) {
+          read: function (addr, callback) {
             if (!mcp.isConnected()) {
               //this.connect();
               throw new Error("Not connected!");
@@ -80,14 +80,14 @@ module.exports = {
             var reply = mcp.readItems(addr, callback);
             return reply;
           },
-          closeConnection: function() {
+          closeConnection: function () {
             mcp.connectionReset();
             options.preventAutoReconnect = true;
           },
-          on: function(a, b) {
+          on: function (a, b) {
             mcp.on(a, b);
           },
-          connect: function() {
+          connect: function () {
             options.preventAutoReconnect = false;
             if (mcp && !mcp.isConnected() && !connecting) {
               connecting = true;
@@ -95,7 +95,7 @@ module.exports = {
             }
           },
 
-          disconnect: function() {
+          disconnect: function () {
             this._instances -= 1;
             if (this._instances <= 0) {
               util.log(`[mcprotocol] closing connection ~ ${id}`);
@@ -104,15 +104,26 @@ module.exports = {
               util.log(`[mcprotocol] deleting connection from pool ~ ${id}`);
               delete pool[id];
             }
-          }
+          },
+          reinitialize: function () {
+            //in case of physical connection loss, it does not get the connection back
+            //when connecting again. the mcp object needs to be renewed.
+            this.disconnect();
+            if (!mcp) {
+              mcp = new mcprotocol();
+              connecting = false;
+            }
+            this.connect();
+            this._instances += 1;
+          },
         };
 
-        mcp.on("error", function(e) {
+        mcp.on("error", function (e) {
           if (mcp) {
             util.log(`[mcprotocol] error ~ ${id}: ${e}`);
             connecting = false;
             if (options.autoConnect) {
-              setTimeout(function() {
+              setTimeout(function () {
                 if (options.autoConnect && !options.preventAutoReconnect) {
                   util.log(
                     `[mcprotocol] autoConnect call from  error handler ~ ${id}`
@@ -123,17 +134,17 @@ module.exports = {
             }
           }
         });
-        mcp.on("open", function() {
+        mcp.on("open", function () {
           if (mcp) {
             util.log(`[mcprotocol] connected ~ ${id}`);
             connecting = false;
           }
         });
-        mcp.on("close", function(err) {
+        mcp.on("close", function (err) {
           util.log(`[mcprotocol] connection closed ~ ${id}`);
           connecting = false;
           if (options.autoConnect) {
-            setTimeout(function() {
+            setTimeout(function () {
               if (options.autoConnect && !options.preventAutoReconnect) {
                 util.log(
                   `[mcprotocol] autoConnect call from close handler ~ ${id}`
@@ -149,5 +160,5 @@ module.exports = {
     }
     pool[id]._instances += 1;
     return pool[id];
-  }
+  },
 };
