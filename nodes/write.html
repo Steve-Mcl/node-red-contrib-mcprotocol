@@ -131,7 +131,7 @@ SOFTWARE.
     <dd>PLC Memory Address</dd>
     <dt class="required">Data<span class="property-type">Array&lt;number&gt; | number | string | payload </span></dt>
     <dd>Data to be written to PLC starting at specified address.</dd>
-    <p><i>INFO: To open / close the MC Protocol connection, send boolean <code>true</code> in <code>msg.connect</code> or <code>msg.disconnect</code>.  Alternatively, send string <code>connect</code> or <code>disconnect</code> in <code>msg.topic</code> to the any mc read / mc write node.</i></p>
+    <p><i>INFO: To open / close the MC Protocol connection, send boolean <code>true</code> in <code>msg.connect</code> , <code>msg.disconnect</code> or <code>msg.reinitialize</code>.  Alternatively, send string <code>connect</code>, <code>disconnect</code> or <code>reinitialize</code> in <code>msg.topic</code> to the any mc read / mc write node.</i></p>
   </dl>
   <h3>Outputs</h3>
   <dl class="message-properties">
