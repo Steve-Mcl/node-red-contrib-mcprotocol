@@ -64,5 +64,6 @@ typings/
 .vscode
 
 dev*
+.idea
 
 package-lock.json

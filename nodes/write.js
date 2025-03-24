@@ -24,7 +24,7 @@ SOFTWARE.
 
 module.exports = function(RED) {
   var connection_pool = require("../connection_pool.js");
-  var util = require("util");
+
   function isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
   }

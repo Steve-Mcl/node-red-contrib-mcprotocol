@@ -22,8 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. 
 */
 
-var util = require("util");
-
 var pool = {};
 
 module.exports = {
@@ -46,7 +44,7 @@ module.exports = {
           options.autoConnect == "undefined" ? true : options.autoConnect;
         options.preventAutoReconnect = false;
         options.logLevel = options.logLevel || "WARN";
-        util.log(`[mcprotocol] adding new connection to pool ~ ${id}`);
+        node.debug(`[mcprotocol] adding new connection to pool ~ ${id}`);
 
         var mcp = new mcprotocol();
 
@@ -97,10 +95,10 @@ module.exports = {
           disconnect: function() {
             this._instances -= 1;
             if (this._instances <= 0) {
-              util.log(`[mcprotocol] closing connection ~ ${id}`);
+              node.debug(`[mcprotocol] closing connection ~ ${id}`);
               mcp.dropConnection();
               mcp = null;
-              util.log(`[mcprotocol] deleting connection from pool ~ ${id}`);
+              node.debug(`[mcprotocol] deleting connection from pool ~ ${id}`);
               delete pool[id];
             }
           },
@@ -119,12 +117,12 @@ module.exports = {
 
         mcp.on("error", function(e) {
           if (mcp) {
-            util.log(`[mcprotocol] error ~ ${id}: ${e}`);
+            node.error(`[mcprotocol] error ~ ${id}: ${e}`);
             connecting = false;
             if (options.autoConnect) {
               setTimeout(function() {
                 if (options.autoConnect && !options.preventAutoReconnect) {
-                  util.log(
+                  node.error(
                     `[mcprotocol] autoConnect call from  error handler ~ ${id}`
                   );
                   obj.connect();
@@ -135,17 +133,17 @@ module.exports = {
         });
         mcp.on("open", function() {
           if (mcp) {
-            util.log(`[mcprotocol] connected ~ ${id}`);
+            node.debug(`[mcprotocol] connected ~ ${id}`);
             connecting = false;
           }
         });
         mcp.on("close", function(err) {
-          util.log(`[mcprotocol] connection closed ~ ${id}`);
+          node.debug(`[mcprotocol] connection closed ~ ${id}`);
           connecting = false;
           if (options.autoConnect) {
             setTimeout(function() {
               if (options.autoConnect && !options.preventAutoReconnect) {
-                util.log(
+                node.debug(
                   `[mcprotocol] autoConnect call from close handler ~ ${id}`
                 );
                 obj.connect();
